@@ -1,0 +1,18 @@
+# Configuration example for WidowX 250 (W250) robot arm
+
+port: /dev/ttyUSB0  # Port to connect to the arm (adjust according to your setup)
+
+# For safety, max_relative_target limits motor movements
+# Set to 5.0 degrees by default, can be adjusted or set to null to remove limit
+max_relative_target: 5.0
+
+# Disable torque when disconnecting for safety
+disable_torque_on_disconnect: true
+
+# Camera configuration (optional)
+cameras:
+  # Example camera configuration - uncomment and adjust if needed
+  # cam_wrist:
+  #   height: 480
+  #   width: 640
+  #   fps: 30
