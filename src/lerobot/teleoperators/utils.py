@@ -81,5 +81,9 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .reachy2_teleoperator import Reachy2Teleoperator
 
         return Reachy2Teleoperator(config)
+    elif config.type == "w250_joystick":
+        from .w250_joystick import W250Joystick
+
+        return W250Joystick(config)
     else:
         raise ValueError(config.type)
