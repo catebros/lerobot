@@ -92,8 +92,10 @@ def main():
 
     print("Connecting to W250 robot...")
     try:
-        robot.connect()
-        print("✓ Robot connected\n")
+        # Connect without calibrating to avoid automatic gripper movements
+        robot.connect(calibrate=False)
+        print("✓ Robot connected (without auto-calibration)\n")
+        print("Note: Robot will stay in current position")
     except Exception as e:
         print(f"✗ Failed to connect to robot: {e}")
         teleop.disconnect()

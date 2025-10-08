@@ -293,29 +293,30 @@ class W250Interbotix(Robot):
     def calibrate(self) -> None:
         """
         Calibration for Interbotix robot
-        
+
         The Interbotix API handles calibration internally, so we just
         move the robot to a safe home position.
         """
         if not self.bot:
             logger.error("Robot not connected, cannot calibrate")
             return
-            
+
         logger.info("Calibrating robot (moving to home position)...")
-        
+
         try:
             # Move to home position
             self.bot.arm.go_to_home_pose()
 
-            # Open gripper using release() method (no delay for faster calibration)
-            if hasattr(self.bot, 'gripper'):
-                self.bot.gripper.release(delay=0)
-            
+            # DON'T automatically open gripper during calibration to avoid loops
+            # The gripper will be controlled explicitly by teleoperation
+            # if hasattr(self.bot, 'gripper'):
+            #     self.bot.gripper.release(delay=0)
+
             # Update positions after calibration
             self._update_positions()
-            
-            logger.info("Robot calibration completed")
-            
+
+            logger.info("Robot calibration completed (gripper not moved)")
+
         except Exception as e:
             logger.error(f"Calibration failed: {e}")
             raise
