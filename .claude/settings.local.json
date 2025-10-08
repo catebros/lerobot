@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Cate/OneDrive - IE University/Extra-Curriculars/Cyphy Life/w250_joystick/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

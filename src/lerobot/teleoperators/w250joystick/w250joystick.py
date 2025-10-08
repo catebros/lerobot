@@ -16,8 +16,9 @@
 
 import logging
 import threading
+import time
 from enum import IntEnum
-from typing import Any
+from typing import Any, Dict
 
 import numpy as np
 
@@ -57,18 +58,24 @@ class JoyConController(Node):
         super().__init__(config.ros2_node_name)
         self.config = config
 
-        # Current state
+        # Current state from ROS2
         self.axes = []
         self.buttons = []
         self.lock = threading.Lock()
 
         # Episode control flags
         self.episode_end_status = None
-        self.intervention_flag = False
+        self.intervention_flag = True  # Start with intervention enabled
 
-        # Gripper commands
-        self.open_gripper_command = False
-        self.close_gripper_command = False
+        # Current joint positions (incremental control)
+        self.current_positions = {
+            "waist.pos": 0.0,
+            "shoulder.pos": 0.0,
+            "elbow.pos": 0.0,
+            "wrist_angle.pos": 0.0,
+            "wrist_rotate.pos": 0.0,
+            "gripper.pos": 0.5,  # Start half-open
+        }
 
         # Subscribe to joy topic
         self.subscription = self.create_subscription(Joy, config.joy_topic, self.joy_callback, 10)
@@ -76,14 +83,17 @@ class JoyConController(Node):
         self.get_logger().info(
             f"W250 Left JoyCon Controller initialized, listening to {config.joy_topic}"
         )
-        self.get_logger().info("Left JoyCon controls:")
-        self.get_logger().info("  Analog stick: Move in X-Y plane")
-        self.get_logger().info("  D-pad Up/Down: Move in Z axis (up/down)")
-        self.get_logger().info("  Minus button: Open gripper")
-        self.get_logger().info("  ZL button: Close gripper")
-        self.get_logger().info("  L button: Enable intervention")
-        self.get_logger().info("  Stick button (L3): End episode with SUCCESS")
-        self.get_logger().info("  Capture button: Rerecord episode")
+        self.get_logger().info("=== Left JoyCon Intuitive Controls ===")
+        self.get_logger().info("  Analog Stick X: Waist rotation (left/right)")
+        self.get_logger().info("  Analog Stick Y: Shoulder (up/down)")
+        self.get_logger().info("  D-pad Up: Elbow extend")
+        self.get_logger().info("  D-pad Down: Elbow contract")
+        self.get_logger().info("  D-pad Left: Wrist angle down")
+        self.get_logger().info("  D-pad Right: Wrist angle up")
+        self.get_logger().info("  Minus (-): Open gripper")
+        self.get_logger().info("  ZL: Close gripper")
+        self.get_logger().info("  L: Toggle intervention (emergency stop)")
+        self.get_logger().info("  Stick button (L3): Reset to home position")
 
     def joy_callback(self, msg: Joy):
         """Callback for Joy messages from ROS2."""
@@ -103,19 +113,101 @@ class JoyConController(Node):
                 return bool(self.buttons[button_idx])
             return False
 
+    def _apply_deadzone(self, value: float) -> float:
+        """Apply deadzone to analog input."""
+        deadzone = self.config.deadzone
+        return 0.0 if abs(value) < deadzone else value
+
+    def _clamp_position(self, joint_name: str, position: float) -> float:
+        """Clamp joint position to valid range."""
+        if joint_name == "gripper":
+            return max(0.0, min(1.0, position))
+        else:
+            return max(-1.0, min(1.0, position))
+
+    def get_joint_increments(self) -> Dict[str, float]:
+        """Calculate joint increments from joystick input (Interbotix-style mapping)."""
+        increments = {}
+
+        axes = self.get_axes_values()
+        if not axes or len(axes) < 2:
+            return {joint: 0.0 for joint in self.current_positions.keys()}
+
+        # Analog stick controls (continuous)
+        # Stick X -> Waist (left/right rotation)
+        stick_x = self._apply_deadzone(axes[self.config.stick_x_axis] if len(axes) > self.config.stick_x_axis else 0.0)
+        increments["waist.pos"] = stick_x * self.config.y_step_size  # Using y_step_size for waist
+
+        # Stick Y -> Shoulder (up/down)
+        stick_y = self._apply_deadzone(axes[self.config.stick_y_axis] if len(axes) > self.config.stick_y_axis else 0.0)
+        increments["shoulder.pos"] = -stick_y * self.config.x_step_size  # Inverted for intuitive control
+
+        # D-pad controls (discrete buttons)
+        # Up/Down -> Elbow
+        if self.get_button_state(self.config.button_up):
+            increments["elbow.pos"] = self.config.z_step_size
+        elif self.get_button_state(self.config.button_down):
+            increments["elbow.pos"] = -self.config.z_step_size
+        else:
+            increments["elbow.pos"] = 0.0
+
+        # Left/Right -> Wrist angle
+        if self.get_button_state(self.config.button_left):
+            increments["wrist_angle.pos"] = -self.config.z_step_size * 0.5  # Slower
+        elif self.get_button_state(self.config.button_right):
+            increments["wrist_angle.pos"] = self.config.z_step_size * 0.5
+        else:
+            increments["wrist_angle.pos"] = 0.0
+
+        # Wrist rotate - not mapped yet (could use L2/R2 if available)
+        increments["wrist_rotate.pos"] = 0.0
+
+        # Gripper increments
+        if self.get_button_state(self.config.button_minus):
+            increments["gripper.pos"] = -0.02  # Open (negative)
+        elif self.get_button_state(self.config.button_zl):
+            increments["gripper.pos"] = 0.02  # Close (positive)
+        else:
+            increments["gripper.pos"] = 0.0
+
+        return increments
+
+    def apply_increments(self, increments: Dict[str, float]) -> Dict[str, float]:
+        """Apply increments to current positions and return new positions."""
+        new_positions = {}
+
+        for joint, increment in increments.items():
+            current_pos = self.current_positions.get(joint, 0.0)
+            new_pos = current_pos + increment
+            new_pos = self._clamp_position(joint.split('.')[0], new_pos)
+
+            self.current_positions[joint] = new_pos
+            new_positions[joint] = new_pos
+
+        return new_positions
+
+    def reset_to_home(self):
+        """Reset all joints to home position."""
+        for joint in self.current_positions:
+            if joint == "gripper.pos":
+                self.current_positions[joint] = 0.5  # Half-open
+            else:
+                self.current_positions[joint] = 0.0  # Center
+
     def update_state(self):
         """Update episode control state based on button presses."""
-        # Check intervention button (L button)
-        self.intervention_flag = self.get_button_state(self.config.button_l)
+        # Check intervention button (L button) - toggle on press
+        if self.get_button_state(self.config.button_l):
+            self.intervention_flag = not self.intervention_flag
+            time.sleep(0.2)  # Debounce
 
-        # Check gripper buttons
-        self.open_gripper_command = self.get_button_state(self.config.button_minus)
-        self.close_gripper_command = self.get_button_state(self.config.button_zl)
+        # Check home button (stick button)
+        if self.get_button_state(self.config.button_stick):
+            self.reset_to_home()
+            time.sleep(0.2)  # Debounce
 
         # Check episode end buttons
-        if self.get_button_state(self.config.button_stick):
-            self.episode_end_status = TeleopEvents.SUCCESS
-        elif self.get_button_state(self.config.button_capture):
+        if self.get_button_state(self.config.button_capture):
             self.episode_end_status = TeleopEvents.RERECORD_EPISODE
         else:
             self.episode_end_status = None
@@ -145,18 +237,15 @@ class W250JoystickTeleop(Teleoperator):
 
     @property
     def action_features(self) -> dict:
-        if self.config.use_gripper:
-            return {
-                "dtype": "float32",
-                "shape": (4,),
-                "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2, "gripper": 3},
-            }
-        else:
-            return {
-                "dtype": "float32",
-                "shape": (3,),
-                "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2},
-            }
+        """Define the structure of actions produced by this teleoperator."""
+        return {
+            "waist.pos": float,
+            "shoulder.pos": float,
+            "elbow.pos": float,
+            "wrist_angle.pos": float,
+            "wrist_rotate.pos": float,
+            "gripper.pos": float,
+        }
 
     @property
     def feedback_features(self) -> dict:
@@ -188,57 +277,20 @@ class W250JoystickTeleop(Teleoperator):
             logging.error(f"Error in ROS2 spin: {e}")
 
     def get_action(self) -> dict[str, Any]:
-        """Get action from Left JoyCon inputs."""
+        """Get action from Left JoyCon inputs - returns absolute joint positions."""
         if self.joycon_node is None:
             raise RuntimeError("JoyCon controller not connected. Call connect() first.")
 
         # Update the controller state
         self.joycon_node.update_state()
 
-        # Get axes values
-        axes = self.joycon_node.get_axes_values()
+        # Get increments from joystick input
+        increments = self.joycon_node.get_joint_increments()
 
-        # Default to zero movement
-        delta_x = 0.0
-        delta_y = 0.0
-        delta_z = 0.0
+        # Apply increments to get new absolute positions
+        positions = self.joycon_node.apply_increments(increments)
 
-        if axes:
-            # Get analog stick values and apply deadzone
-            stick_x = axes[self.config.stick_x_axis] if len(axes) > self.config.stick_x_axis else 0.0
-            stick_y = axes[self.config.stick_y_axis] if len(axes) > self.config.stick_y_axis else 0.0
-
-            # Apply deadzone
-            stick_x = 0.0 if abs(stick_x) < self.config.deadzone else stick_x
-            stick_y = 0.0 if abs(stick_y) < self.config.deadzone else stick_y
-
-            # Map to deltas (invert Y axis as joystick up is typically negative)
-            delta_x = -stick_y * self.config.x_step_size  # Forward/Backward
-            delta_y = stick_x * self.config.y_step_size  # Left/Right
-
-        # Handle Z-axis movement with D-pad buttons
-        if self.joycon_node.get_button_state(self.config.button_up):
-            delta_z = self.config.z_step_size  # Move up
-        elif self.joycon_node.get_button_state(self.config.button_down):
-            delta_z = -self.config.z_step_size  # Move down
-
-        # Create action dictionary
-        action_dict = {
-            "delta_x": float(delta_x),
-            "delta_y": float(delta_y),
-            "delta_z": float(delta_z),
-        }
-
-        # Handle gripper
-        gripper_action = GripperAction.STAY.value
-        if self.config.use_gripper:
-            if self.joycon_node.open_gripper_command and not self.joycon_node.close_gripper_command:
-                gripper_action = GripperAction.OPEN.value
-            elif self.joycon_node.close_gripper_command and not self.joycon_node.open_gripper_command:
-                gripper_action = GripperAction.CLOSE.value
-            action_dict["gripper"] = gripper_action
-
-        return action_dict
+        return positions
 
     def get_teleop_events(self) -> dict[str, Any]:
         """
