@@ -446,15 +446,17 @@ class W250Interbotix(Robot):
 
                 if command_changed:
                     # Determine desired state
-                    # Use small delay to prevent command flooding the ROS2 node
+                    # Use delay=0 to prevent blocking, let the gripper move asynchronously
                     if gripper_cmd > 0.5:  # Open gripper
-                        self.bot.gripper.release(delay=0.5)
-                        logger.debug(f"Gripper: releasing (opening) - value {gripper_cmd:.3f}")
+                        self.bot.gripper.release(delay=0)
+                        logger.info(f"Gripper: releasing (opening) - value {gripper_cmd:.3f}")
                     else:  # Close gripper
-                        self.bot.gripper.grasp(delay=0.5)
-                        logger.debug(f"Gripper: grasping (closing) - value {gripper_cmd:.3f}")
+                        self.bot.gripper.grasp(delay=0)
+                        logger.info(f"Gripper: grasping (closing) - value {gripper_cmd:.3f}")
 
                     self._last_gripper_value = gripper_cmd
+                else:
+                    logger.debug(f"Gripper: no change (current={self._last_gripper_value:.3f}, new={gripper_cmd:.3f})")
             
             logger.debug(f"Sent action to robot: {goal_pos}")
             
