@@ -305,9 +305,9 @@ class W250Interbotix(Robot):
             # Move to home position
             self.bot.arm.go_to_home_pose()
 
-            # Open gripper (no delay for faster calibration)
+            # Open gripper using release() method (no delay for faster calibration)
             if hasattr(self.bot, 'gripper'):
-                self.bot.gripper.open(delay=0)
+                self.bot.gripper.release(delay=0)
             
             # Update positions after calibration
             self._update_positions()
@@ -431,13 +431,13 @@ class W250Interbotix(Robot):
             # Send joint position command (non-blocking for real-time control)
             self.bot.arm.set_joint_positions(arm_positions, blocking=False)
             
-            # Handle gripper command (no delay for real-time control)
+            # Handle gripper command using release()/grasp() methods (no delay for real-time control)
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
                 if gripper_cmd > 0.5:  # Open gripper
-                    self.bot.gripper.open(delay=0)
+                    self.bot.gripper.release(delay=0)
                 else:  # Close gripper
-                    self.bot.gripper.close(delay=0)
+                    self.bot.gripper.grasp(delay=0)
             
             logger.debug(f"Sent action to robot: {goal_pos}")
             
