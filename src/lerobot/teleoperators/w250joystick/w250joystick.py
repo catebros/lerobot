@@ -51,8 +51,8 @@ gripper_action_map = {
 }
 
 
-class JoyConController(Node):
-    """ROS2 node to receive Joy messages from Nintendo Switch Left JoyCon."""
+class GamepadController(Node):
+    """ROS2 node to receive Joy messages from Logitech F710 gamepad."""
 
     def __init__(self, config: W250JoystickConfig):
         super().__init__(config.ros2_node_name)
@@ -81,19 +81,19 @@ class JoyConController(Node):
         self.subscription = self.create_subscription(Joy, config.joy_topic, self.joy_callback, 10)
 
         self.get_logger().info(
-            f"W250 Left JoyCon Controller initialized, listening to {config.joy_topic}"
+            f"W250 Logitech F710 Gamepad Controller initialized, listening to {config.joy_topic}"
         )
-        self.get_logger().info("=== Left JoyCon Intuitive Controls ===")
-        self.get_logger().info("  Analog Stick X: Waist rotation (left/right)")
-        self.get_logger().info("  Analog Stick Y: Shoulder (up/down)")
-        self.get_logger().info("  D-pad Up: Elbow extend")
-        self.get_logger().info("  D-pad Down: Elbow contract")
-        self.get_logger().info("  D-pad Left: Wrist angle down")
-        self.get_logger().info("  D-pad Right: Wrist angle up")
-        self.get_logger().info("  Minus (-): Open gripper")
-        self.get_logger().info("  ZL: Close gripper")
-        self.get_logger().info("  L: Toggle intervention (emergency stop)")
-        self.get_logger().info("  Stick button (L3): Reset to home position")
+        self.get_logger().info("=== Logitech F710 Gamepad Controls ===")
+        self.get_logger().info("  Left Stick X: Waist rotation (left/right)")
+        self.get_logger().info("  Left Stick Y: Shoulder (up/down)")
+        self.get_logger().info("  Right Stick X: Wrist angle")
+        self.get_logger().info("  Right Stick Y: Elbow (up/down)")
+        self.get_logger().info("  LT/RT (Triggers): Wrist rotate")
+        self.get_logger().info("  LB: Open gripper")
+        self.get_logger().info("  RB: Close gripper")
+        self.get_logger().info("  Back: Toggle intervention (emergency stop)")
+        self.get_logger().info("  Y: Reset to home position")
+        self.get_logger().info("  Start: Rerecord episode")
 
     def joy_callback(self, msg: Joy):
         """Callback for Joy messages from ROS2."""
@@ -126,46 +126,52 @@ class JoyConController(Node):
             return max(-1.0, min(1.0, position))
 
     def get_joint_increments(self) -> Dict[str, float]:
-        """Calculate joint increments from joystick input (Interbotix-style mapping)."""
+        """Calculate joint increments from F710 gamepad input."""
         increments = {}
 
         axes = self.get_axes_values()
-        if not axes or len(axes) < 2:
+        if not axes or len(axes) < 6:
             return {joint: 0.0 for joint in self.current_positions.keys()}
 
-        # Analog stick controls (continuous)
-        # Stick X -> Waist (left/right rotation)
-        stick_x = self._apply_deadzone(axes[self.config.stick_x_axis] if len(axes) > self.config.stick_x_axis else 0.0)
-        increments["waist.pos"] = stick_x * self.config.y_step_size  # Using y_step_size for waist
+        # Left stick controls - Waist and Shoulder
+        # Left Stick X -> Waist (left/right rotation)
+        left_stick_x = self._apply_deadzone(axes[self.config.left_stick_x_axis] if len(axes) > self.config.left_stick_x_axis else 0.0)
+        increments["waist.pos"] = left_stick_x * self.config.y_step_size
 
-        # Stick Y -> Shoulder (up/down)
-        stick_y = self._apply_deadzone(axes[self.config.stick_y_axis] if len(axes) > self.config.stick_y_axis else 0.0)
-        increments["shoulder.pos"] = -stick_y * self.config.x_step_size  # Inverted for intuitive control
+        # Left Stick Y -> Shoulder (up/down)
+        left_stick_y = self._apply_deadzone(axes[self.config.left_stick_y_axis] if len(axes) > self.config.left_stick_y_axis else 0.0)
+        increments["shoulder.pos"] = -left_stick_y * self.config.x_step_size  # Inverted for intuitive control
 
-        # D-pad controls (discrete buttons)
-        # Up/Down -> Elbow
-        if self.get_button_state(self.config.button_up):
-            increments["elbow.pos"] = self.config.z_step_size
-        elif self.get_button_state(self.config.button_down):
-            increments["elbow.pos"] = -self.config.z_step_size
-        else:
-            increments["elbow.pos"] = 0.0
+        # Right stick controls - Elbow and Wrist angle
+        # Right Stick Y -> Elbow (up/down)
+        right_stick_y = self._apply_deadzone(axes[self.config.right_stick_y_axis] if len(axes) > self.config.right_stick_y_axis else 0.0)
+        increments["elbow.pos"] = -right_stick_y * self.config.z_step_size  # Inverted for intuitive control
 
-        # Left/Right -> Wrist angle
-        if self.get_button_state(self.config.button_left):
-            increments["wrist_angle.pos"] = -self.config.z_step_size * 0.5  # Slower
-        elif self.get_button_state(self.config.button_right):
-            increments["wrist_angle.pos"] = self.config.z_step_size * 0.5
-        else:
-            increments["wrist_angle.pos"] = 0.0
+        # Right Stick X -> Wrist angle
+        right_stick_x = self._apply_deadzone(axes[self.config.right_stick_x_axis] if len(axes) > self.config.right_stick_x_axis else 0.0)
+        increments["wrist_angle.pos"] = right_stick_x * self.config.wrist_step_size
 
-        # Wrist rotate - not mapped yet (could use L2/R2 if available)
-        increments["wrist_rotate.pos"] = 0.0
+        # Triggers control - Wrist rotate
+        # LT and RT are typically -1 to 1, with -1 being unpressed
+        left_trigger = axes[self.config.left_trigger_axis] if len(axes) > self.config.left_trigger_axis else -1.0
+        right_trigger = axes[self.config.right_trigger_axis] if len(axes) > self.config.right_trigger_axis else -1.0
 
-        # Gripper increments
-        if self.get_button_state(self.config.button_minus):
+        # Normalize triggers from -1..1 to 0..1 (0 is unpressed, 1 is fully pressed)
+        left_trigger_pressed = (left_trigger + 1.0) / 2.0
+        right_trigger_pressed = (right_trigger + 1.0) / 2.0
+
+        # Calculate wrist rotate increment
+        wrist_rotate_increment = 0.0
+        if left_trigger_pressed > 0.1:  # Small deadzone
+            wrist_rotate_increment -= left_trigger_pressed * self.config.wrist_step_size
+        if right_trigger_pressed > 0.1:
+            wrist_rotate_increment += right_trigger_pressed * self.config.wrist_step_size
+        increments["wrist_rotate.pos"] = wrist_rotate_increment
+
+        # Gripper increments - kept unchanged as requested
+        if self.get_button_state(self.config.button_lb):
             increments["gripper.pos"] = -0.02  # Open (negative)
-        elif self.get_button_state(self.config.button_zl):
+        elif self.get_button_state(self.config.button_rb):
             increments["gripper.pos"] = 0.02  # Close (positive)
         else:
             increments["gripper.pos"] = 0.0
@@ -196,18 +202,18 @@ class JoyConController(Node):
 
     def update_state(self):
         """Update episode control state based on button presses."""
-        # Check intervention button (L button) - toggle on press
-        if self.get_button_state(self.config.button_l):
+        # Check intervention button (Back button) - toggle on press
+        if self.get_button_state(self.config.button_back):
             self.intervention_flag = not self.intervention_flag
             time.sleep(0.2)  # Debounce
 
-        # Check home button (stick button)
-        if self.get_button_state(self.config.button_stick):
+        # Check home button (Y button)
+        if self.get_button_state(self.config.button_y):
             self.reset_to_home()
             time.sleep(0.2)  # Debounce
 
         # Check episode end buttons
-        if self.get_button_state(self.config.button_capture):
+        if self.get_button_state(self.config.button_start):
             self.episode_end_status = TeleopEvents.RERECORD_EPISODE
         else:
             self.episode_end_status = None
@@ -215,14 +221,15 @@ class JoyConController(Node):
 
 class W250JoystickTeleop(Teleoperator):
     """
-    Teleop class to use Nintendo Switch Left JoyCon inputs via ROS2 for control.
-    Requires ROS2 joy node to be running with paired Left JoyCon.
+    Teleop class to use Logitech F710 gamepad inputs via ROS2 for control.
+    Requires ROS2 joy node to be running with connected F710 gamepad.
 
     To use this teleoperator:
-    1. Pair your Left JoyCon via Bluetooth
-    2. Install and run the ROS2 joy node:
+    1. Connect your Logitech F710 gamepad via USB or wireless dongle
+    2. Ensure the mode switch on the back is set to 'X' (XInput mode)
+    3. Install and run the ROS2 joy node:
        ros2 run joy joy_node
-    3. Run your robot control with this teleoperator
+    4. Run your robot control with this teleoperator
     """
 
     config_class = W250JoystickConfig
@@ -231,7 +238,7 @@ class W250JoystickTeleop(Teleoperator):
     def __init__(self, config: W250JoystickConfig):
         super().__init__(config)
         self.config = config
-        self.joycon_node = None
+        self.gamepad_node = None
         self.ros_thread = None
         self.executor = None
 
@@ -252,22 +259,22 @@ class W250JoystickTeleop(Teleoperator):
         return {}
 
     def connect(self) -> None:
-        """Initialize ROS2 and start the JoyCon controller node."""
+        """Initialize ROS2 and start the gamepad controller node."""
         # Initialize ROS2 if not already initialized
         if not rclpy.ok():
             rclpy.init()
 
-        # Create the JoyCon controller node
-        self.joycon_node = JoyConController(self.config)
+        # Create the gamepad controller node
+        self.gamepad_node = GamepadController(self.config)
 
         # Start spinning in a separate thread
         self.executor = rclpy.executors.SingleThreadedExecutor()
-        self.executor.add_node(self.joycon_node)
+        self.executor.add_node(self.gamepad_node)
 
         self.ros_thread = threading.Thread(target=self._spin_ros, daemon=True)
         self.ros_thread.start()
 
-        logging.info("W250 JoyCon teleoperator connected and listening for joy messages")
+        logging.info("W250 F710 gamepad teleoperator connected and listening for joy messages")
 
     def _spin_ros(self):
         """Spin ROS2 executor in a separate thread."""
@@ -277,24 +284,24 @@ class W250JoystickTeleop(Teleoperator):
             logging.error(f"Error in ROS2 spin: {e}")
 
     def get_action(self) -> dict[str, Any]:
-        """Get action from Left JoyCon inputs - returns absolute joint positions."""
-        if self.joycon_node is None:
-            raise RuntimeError("JoyCon controller not connected. Call connect() first.")
+        """Get action from F710 gamepad inputs - returns absolute joint positions."""
+        if self.gamepad_node is None:
+            raise RuntimeError("Gamepad controller not connected. Call connect() first.")
 
         # Update the controller state
-        self.joycon_node.update_state()
+        self.gamepad_node.update_state()
 
-        # Get increments from joystick input
-        increments = self.joycon_node.get_joint_increments()
+        # Get increments from gamepad input
+        increments = self.gamepad_node.get_joint_increments()
 
         # Apply increments to get new absolute positions
-        positions = self.joycon_node.apply_increments(increments)
+        positions = self.gamepad_node.apply_increments(increments)
 
         return positions
 
     def get_teleop_events(self) -> dict[str, Any]:
         """
-        Get extra control events from the JoyCons such as intervention status,
+        Get extra control events from the gamepad such as intervention status,
         episode termination, success indicators, etc.
 
         Returns:
@@ -304,7 +311,7 @@ class W250JoystickTeleop(Teleoperator):
                 - success: bool - Whether the episode was successful
                 - rerecord_episode: bool - Whether to rerecord the episode
         """
-        if self.joycon_node is None:
+        if self.gamepad_node is None:
             return {
                 TeleopEvents.IS_INTERVENTION: False,
                 TeleopEvents.TERMINATE_EPISODE: False,
@@ -313,13 +320,13 @@ class W250JoystickTeleop(Teleoperator):
             }
 
         # Update state
-        self.joycon_node.update_state()
+        self.gamepad_node.update_state()
 
         # Check if intervention is active
-        is_intervention = self.joycon_node.intervention_flag
+        is_intervention = self.gamepad_node.intervention_flag
 
         # Get episode end status
-        episode_end_status = self.joycon_node.episode_end_status
+        episode_end_status = self.gamepad_node.episode_end_status
         terminate_episode = episode_end_status in [
             TeleopEvents.RERECORD_EPISODE,
             TeleopEvents.FAILURE,
@@ -335,40 +342,40 @@ class W250JoystickTeleop(Teleoperator):
         }
 
     def disconnect(self) -> None:
-        """Disconnect from the JoyCon controller and cleanup ROS2."""
+        """Disconnect from the gamepad controller and cleanup ROS2."""
         if self.executor is not None:
             self.executor.shutdown()
 
-        if self.joycon_node is not None:
-            self.joycon_node.destroy_node()
-            self.joycon_node = None
+        if self.gamepad_node is not None:
+            self.gamepad_node.destroy_node()
+            self.gamepad_node = None
 
         if self.ros_thread is not None and self.ros_thread.is_alive():
             self.ros_thread.join(timeout=1.0)
             self.ros_thread = None
 
-        logging.info("W250 JoyCon teleoperator disconnected")
+        logging.info("W250 F710 gamepad teleoperator disconnected")
 
     def is_connected(self) -> bool:
-        """Check if JoyCon controller is connected."""
-        return self.joycon_node is not None
+        """Check if gamepad controller is connected."""
+        return self.gamepad_node is not None
 
     def calibrate(self) -> None:
-        """Calibrate the JoyCon controller."""
-        # No calibration needed for JoyCons with ROS2
+        """Calibrate the gamepad controller."""
+        # No calibration needed for gamepad with ROS2
         pass
 
     def is_calibrated(self) -> bool:
-        """Check if JoyCon controller is calibrated."""
-        # JoyCons don't require calibration with ROS2
+        """Check if gamepad controller is calibrated."""
+        # Gamepad doesn't require calibration with ROS2
         return True
 
     def configure(self) -> None:
-        """Configure the JoyCon controller."""
+        """Configure the gamepad controller."""
         # No additional configuration needed
         pass
 
     def send_feedback(self, feedback: dict) -> None:
-        """Send feedback to the JoyCon controller."""
-        # JoyCons don't support feedback in this implementation
+        """Send feedback to the gamepad controller."""
+        # F710 doesn't support feedback in this implementation
         pass

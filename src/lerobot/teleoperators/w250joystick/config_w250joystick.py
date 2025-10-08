@@ -22,35 +22,46 @@ from ..config import TeleoperatorConfig
 @TeleoperatorConfig.register_subclass("w250joystick")
 @dataclass
 class W250JoystickConfig(TeleoperatorConfig):
-    """Configuration for Nintendo Switch Left JoyCon teleoperator using ROS2."""
+    """Configuration for Logitech F710 gamepad teleoperator using ROS2."""
 
     # ROS2 settings
-    ros2_node_name: str = "w250_joycon_teleop"
+    ros2_node_name: str = "w250_gamepad_teleop"
     joy_topic: str = "/joy"
 
     # Control settings
     use_gripper: bool = True
     deadzone: float = 0.1
 
-    # Step sizes for movement (in meters)
-    x_step_size: float = 0.01
-    y_step_size: float = 0.01
-    z_step_size: float = 0.01
+    # Step sizes for movement
+    x_step_size: float = 0.01  # Shoulder increment
+    y_step_size: float = 0.01  # Waist increment
+    z_step_size: float = 0.01  # Elbow increment
+    wrist_step_size: float = 0.008  # Wrist angle/rotate increment
 
-    # Left JoyCon axis mappings (using ROS2 joy node standard)
-    # Analog stick for X-Y plane movement
-    stick_x_axis: int = 0  # Left/Right movement (Y axis)
-    stick_y_axis: int = 1  # Forward/Backward movement (X axis)
+    # Logitech F710 axis mappings (XInput mode - switch set to X)
+    # Left analog stick - Waist and Shoulder control
+    left_stick_x_axis: int = 0  # Waist rotation (left/right)
+    left_stick_y_axis: int = 1  # Shoulder (up/down)
 
-    # Left JoyCon button mappings
-    button_up: int = 0  # D-pad Up - Move up (Z+)
-    button_down: int = 1  # D-pad Down - Move down (Z-)
-    button_left: int = 2  # D-pad Left
-    button_right: int = 3  # D-pad Right
+    # Right analog stick - Elbow and Wrist angle control
+    right_stick_x_axis: int = 3  # Wrist angle
+    right_stick_y_axis: int = 4  # Elbow (up/down)
 
-    button_l: int = 4  # L button - Intervention
-    button_zl: int = 6  # ZL button - Close gripper
+    # Triggers - Wrist rotate control
+    left_trigger_axis: int = 2   # Wrist rotate counter-clockwise
+    right_trigger_axis: int = 5  # Wrist rotate clockwise
 
-    button_minus: int = 8  # Minus button - Open gripper
-    button_capture: int = 9  # Capture button - Rerecord episode
-    button_stick: int = 10  # Stick button (L3) - Success
+    # Logitech F710 button mappings (XInput mode)
+    button_a: int = 0       # A button - unused
+    button_b: int = 1       # B button - unused
+    button_x: int = 2       # X button - unused
+    button_y: int = 3       # Y button - Reset to home position
+
+    button_lb: int = 4      # LB button - Open gripper
+    button_rb: int = 5      # RB button - Close gripper
+
+    button_back: int = 6    # Back button - Toggle intervention (emergency stop)
+    button_start: int = 7   # Start button - Rerecord episode
+
+    button_l3: int = 9      # Left stick button - unused
+    button_r3: int = 10     # Right stick button - unused
