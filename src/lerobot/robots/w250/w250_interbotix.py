@@ -58,6 +58,7 @@ class W250Interbotix(Robot):
         # State tracking
         self._is_connected = False
         self._current_positions: Dict[str, float] = {}
+        self._last_gripper_command: Optional[str] = None  # Track last gripper state to avoid loops
         
         # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
         self._joint_names = [
@@ -431,13 +432,21 @@ class W250Interbotix(Robot):
             # Send joint position command (non-blocking for real-time control)
             self.bot.arm.set_joint_positions(arm_positions, blocking=False)
             
-            # Handle gripper command using release()/grasp() methods (no delay for real-time control)
+            # Handle gripper command using release()/grasp() methods
+            # Only send command if state has changed to avoid infinite loop
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
-                if gripper_cmd > 0.5:  # Open gripper
-                    self.bot.gripper.release(delay=0)
-                else:  # Close gripper
-                    self.bot.gripper.grasp(delay=0)
+                desired_state = "open" if gripper_cmd > 0.5 else "closed"
+
+                # Only send command if gripper state changed
+                if self._last_gripper_command != desired_state:
+                    if desired_state == "open":
+                        self.bot.gripper.release(delay=0)
+                        logger.debug("Gripper: releasing (opening)")
+                    else:
+                        self.bot.gripper.grasp(delay=0)
+                        logger.debug("Gripper: grasping (closing)")
+                    self._last_gripper_command = desired_state
             
             logger.debug(f"Sent action to robot: {goal_pos}")
             
