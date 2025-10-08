@@ -22,7 +22,7 @@ from ..config import TeleoperatorConfig
 @TeleoperatorConfig.register_subclass("w250joystick")
 @dataclass
 class W250JoystickConfig(TeleoperatorConfig):
-    """Configuration for Nintendo Switch JoyCon teleoperator using ROS2."""
+    """Configuration for Nintendo Switch Left JoyCon teleoperator using ROS2."""
 
     # ROS2 settings
     ros2_node_name: str = "w250_joycon_teleop"
@@ -37,27 +37,20 @@ class W250JoystickConfig(TeleoperatorConfig):
     y_step_size: float = 0.01
     z_step_size: float = 0.01
 
-    # JoyCon axis mappings (using ROS2 joy node standard)
-    # Left JoyCon - movement control
-    left_stick_x_axis: int = 0  # Left/Right movement
-    left_stick_y_axis: int = 1  # Forward/Backward movement
+    # Left JoyCon axis mappings (using ROS2 joy node standard)
+    # Analog stick for X-Y plane movement
+    stick_x_axis: int = 0  # Left/Right movement (Y axis)
+    stick_y_axis: int = 1  # Forward/Backward movement (X axis)
 
-    # Right JoyCon - Z-axis and rotation
-    right_stick_y_axis: int = 3  # Up/Down movement
+    # Left JoyCon button mappings
+    button_up: int = 0  # D-pad Up - Move up (Z+)
+    button_down: int = 1  # D-pad Down - Move down (Z-)
+    button_left: int = 2  # D-pad Left
+    button_right: int = 3  # D-pad Right
 
-    # Button mappings for JoyCons
-    # Left JoyCon buttons
-    button_l: int = 4  # L button
-    button_zl: int = 6  # ZL button
+    button_l: int = 4  # L button - Intervention
+    button_zl: int = 6  # ZL button - Close gripper
 
-    # Right JoyCon buttons
-    button_r: int = 5  # R button
-    button_zr: int = 7  # ZR button
-    button_a: int = 0  # A button
-    button_b: int = 1  # B button
-    button_x: int = 2  # X button
-    button_y: int = 3  # Y button
-
-    # Special buttons
-    button_plus: int = 9  # Plus button (success)
-    button_minus: int = 8  # Minus button (rerecord)
+    button_minus: int = 8  # Minus button - Open gripper
+    button_capture: int = 9  # Capture button - Rerecord episode
+    button_stick: int = 10  # Stick button (L3) - Success

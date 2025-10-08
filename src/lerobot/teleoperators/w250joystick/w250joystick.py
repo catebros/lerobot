@@ -51,7 +51,7 @@ gripper_action_map = {
 
 
 class JoyConController(Node):
-    """ROS2 node to receive Joy messages from Nintendo Switch JoyCons."""
+    """ROS2 node to receive Joy messages from Nintendo Switch Left JoyCon."""
 
     def __init__(self, config: W250JoystickConfig):
         super().__init__(config.ros2_node_name)
@@ -74,17 +74,16 @@ class JoyConController(Node):
         self.subscription = self.create_subscription(Joy, config.joy_topic, self.joy_callback, 10)
 
         self.get_logger().info(
-            f"W250 JoyCon Controller initialized, listening to {config.joy_topic}"
+            f"W250 Left JoyCon Controller initialized, listening to {config.joy_topic}"
         )
-        self.get_logger().info("JoyCon controls:")
-        self.get_logger().info("  Left stick: Move in X-Y plane")
-        self.get_logger().info("  Right stick (vertical): Move in Z axis")
-        self.get_logger().info("  ZL button: Open gripper")
-        self.get_logger().info("  ZR button: Close gripper")
+        self.get_logger().info("Left JoyCon controls:")
+        self.get_logger().info("  Analog stick: Move in X-Y plane")
+        self.get_logger().info("  D-pad Up/Down: Move in Z axis (up/down)")
+        self.get_logger().info("  Minus button: Open gripper")
+        self.get_logger().info("  ZL button: Close gripper")
         self.get_logger().info("  L button: Enable intervention")
-        self.get_logger().info("  Plus button: End episode with SUCCESS")
-        self.get_logger().info("  Minus button: Rerecord episode")
-        self.get_logger().info("  B button: End episode with FAILURE")
+        self.get_logger().info("  Stick button (L3): End episode with SUCCESS")
+        self.get_logger().info("  Capture button: Rerecord episode")
 
     def joy_callback(self, msg: Joy):
         """Callback for Joy messages from ROS2."""
@@ -110,15 +109,13 @@ class JoyConController(Node):
         self.intervention_flag = self.get_button_state(self.config.button_l)
 
         # Check gripper buttons
-        self.open_gripper_command = self.get_button_state(self.config.button_zl)
-        self.close_gripper_command = self.get_button_state(self.config.button_zr)
+        self.open_gripper_command = self.get_button_state(self.config.button_minus)
+        self.close_gripper_command = self.get_button_state(self.config.button_zl)
 
         # Check episode end buttons
-        if self.get_button_state(self.config.button_plus):
+        if self.get_button_state(self.config.button_stick):
             self.episode_end_status = TeleopEvents.SUCCESS
-        elif self.get_button_state(self.config.button_b):
-            self.episode_end_status = TeleopEvents.FAILURE
-        elif self.get_button_state(self.config.button_minus):
+        elif self.get_button_state(self.config.button_capture):
             self.episode_end_status = TeleopEvents.RERECORD_EPISODE
         else:
             self.episode_end_status = None
@@ -126,11 +123,11 @@ class JoyConController(Node):
 
 class W250JoystickTeleop(Teleoperator):
     """
-    Teleop class to use Nintendo Switch JoyCon inputs via ROS2 for control.
-    Requires ROS2 joy node to be running with paired JoyCons.
+    Teleop class to use Nintendo Switch Left JoyCon inputs via ROS2 for control.
+    Requires ROS2 joy node to be running with paired Left JoyCon.
 
     To use this teleoperator:
-    1. Pair your JoyCons via Bluetooth
+    1. Pair your Left JoyCon via Bluetooth
     2. Install and run the ROS2 joy node:
        ros2 run joy joy_node
     3. Run your robot control with this teleoperator
@@ -191,7 +188,7 @@ class W250JoystickTeleop(Teleoperator):
             logging.error(f"Error in ROS2 spin: {e}")
 
     def get_action(self) -> dict[str, Any]:
-        """Get action from JoyCon inputs."""
+        """Get action from Left JoyCon inputs."""
         if self.joycon_node is None:
             raise RuntimeError("JoyCon controller not connected. Call connect() first.")
 
@@ -207,20 +204,23 @@ class W250JoystickTeleop(Teleoperator):
         delta_z = 0.0
 
         if axes:
-            # Get joystick values and apply deadzone
-            left_x = axes[self.config.left_stick_x_axis] if len(axes) > self.config.left_stick_x_axis else 0.0
-            left_y = axes[self.config.left_stick_y_axis] if len(axes) > self.config.left_stick_y_axis else 0.0
-            right_y = axes[self.config.right_stick_y_axis] if len(axes) > self.config.right_stick_y_axis else 0.0
+            # Get analog stick values and apply deadzone
+            stick_x = axes[self.config.stick_x_axis] if len(axes) > self.config.stick_x_axis else 0.0
+            stick_y = axes[self.config.stick_y_axis] if len(axes) > self.config.stick_y_axis else 0.0
 
             # Apply deadzone
-            left_x = 0.0 if abs(left_x) < self.config.deadzone else left_x
-            left_y = 0.0 if abs(left_y) < self.config.deadzone else left_y
-            right_y = 0.0 if abs(right_y) < self.config.deadzone else right_y
+            stick_x = 0.0 if abs(stick_x) < self.config.deadzone else stick_x
+            stick_y = 0.0 if abs(stick_y) < self.config.deadzone else stick_y
 
             # Map to deltas (invert Y axis as joystick up is typically negative)
-            delta_x = -left_y * self.config.x_step_size  # Forward/Backward
-            delta_y = left_x * self.config.y_step_size  # Left/Right
-            delta_z = -right_y * self.config.z_step_size  # Up/Down
+            delta_x = -stick_y * self.config.x_step_size  # Forward/Backward
+            delta_y = stick_x * self.config.y_step_size  # Left/Right
+
+        # Handle Z-axis movement with D-pad buttons
+        if self.joycon_node.get_button_state(self.config.button_up):
+            delta_z = self.config.z_step_size  # Move up
+        elif self.joycon_node.get_button_state(self.config.button_down):
+            delta_z = -self.config.z_step_size  # Move down
 
         # Create action dictionary
         action_dict = {
