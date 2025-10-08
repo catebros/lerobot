@@ -21,10 +21,11 @@ logger = logging.getLogger(__name__)
 
 class HybridCartesianController:
     """
-    Hybrid controller combining:
-    - Cartesian control for X and Z movements (using Interbotix IK)
-    - Direct joint control for Waist (Y lateral approximation)
+    Direct joint controller:
+    - Direct control of Shoulder/Elbow for X/Z movements
+    - Direct control of Waist for Y lateral movement
     - Gripper pressure control
+    - No IK required - compatible with simulation
     """
 
     def __init__(self, robot, config=None):
@@ -67,31 +68,53 @@ class HybridCartesianController:
             'gripper_changed': False
         }
 
-        # 1. Cartesian Control for X and Z movements
+        # 1. Direct Joint Control for X and Z movements
+        # Map joystick deltas to joint movements
+        # X (forward/back) -> primarily Shoulder
+        # Z (up/down) -> primarily Elbow
         delta_x = delta_action['delta_x'] * self.x_scale
         delta_z = delta_action['delta_z'] * self.z_scale
 
         if abs(delta_x) > self.min_delta or abs(delta_z) > self.min_delta:
             try:
-                # Use Interbotix's set_ee_cartesian_trajectory for IK
-                # Note: y must be 0 for 5 DOF arms like WX250
-                success = self.robot.bot.arm.set_ee_cartesian_trajectory(
-                    x=float(delta_x),
-                    y=0.0,  # Must be 0 for 5 DOF
-                    z=float(delta_z),
-                    roll=0.0,
-                    pitch=0.0,
-                    yaw=0.0,
-                    moving_time=self.moving_time,
-                    wp_moving_time=self.wp_moving_time,
-                    wp_accel_time=self.wp_accel_time,
-                    wp_period=self.wp_period
+                # Get current observations
+                obs = self.robot.get_observation()
+
+                # Get current joint positions (normalized)
+                shoulder_norm = obs.get('shoulder.pos', 0.0)
+                elbow_norm = obs.get('elbow.pos', 0.0)
+
+                # Apply deltas
+                # X movement primarily affects shoulder
+                new_shoulder_norm = shoulder_norm + (delta_x * 0.5)  # Scale factor
+                # Z movement primarily affects elbow
+                new_elbow_norm = elbow_norm + (delta_z * 0.5)  # Scale factor
+
+                # Apply limits (normalized -1 to 1)
+                new_shoulder_norm = np.clip(new_shoulder_norm, -1.0, 1.0)
+                new_elbow_norm = np.clip(new_elbow_norm, -1.0, 1.0)
+
+                # Convert to radians
+                new_shoulder_rad = self.robot._denormalize_position('shoulder', new_shoulder_norm)
+                new_elbow_rad = self.robot._denormalize_position('elbow', new_elbow_norm)
+
+                # Get all current joint positions
+                current_positions = self.robot.bot.arm.get_joint_commands()
+
+                # Update shoulder (index 1) and elbow (index 2)
+                new_positions = list(current_positions)
+                new_positions[1] = float(new_shoulder_rad)
+                new_positions[2] = float(new_elbow_rad)
+
+                # Send command
+                self.robot.bot.arm.set_joint_positions(
+                    new_positions,
+                    blocking=False
                 )
-                result['cartesian_success'] = success
-                if not success:
-                    logger.warning("Cartesian trajectory failed (IK may be infeasible)")
+                result['cartesian_success'] = True
+
             except Exception as e:
-                logger.error(f"Cartesian control error: {e}")
+                logger.error(f"Joint control error: {e}")
                 result['cartesian_success'] = False
 
         # 2. Joint Control for Waist (lateral movement approximation)
@@ -152,11 +175,12 @@ class HybridCartesianController:
 
 
 def main():
-    print("=== W250 + Left JoyCon Hybrid Control ===\n")
+    print("=== W250 + Left JoyCon Direct Joint Control ===\n")
     print("Control Strategy:")
-    print("  - Cartesian IK for X/Z movements")
+    print("  - Direct joint control (Shoulder/Elbow for X/Z)")
     print("  - Direct waist control for lateral movement")
-    print("  - Pressure-based gripper control\n")
+    print("  - Pressure-based gripper control")
+    print("  - No IK required - works in simulation!\n")
 
     # Configure teleoperator
     teleop_config = W250JoystickConfig(
@@ -175,14 +199,15 @@ def main():
     robot = W250Interbotix(robot_config)
 
     # Configure hybrid controller
+    # Note: wp_period must be > 0 and reasonable for simulation
     controller_config = {
         'x_scale': 1.0,      # Full scale for forward/backward
         'y_scale': 0.15,     # Scaled down for waist rotation
         'z_scale': 1.0,      # Full scale for up/down
-        'moving_time': 0.15,
-        'wp_moving_time': 0.08,
-        'wp_accel_time': 0.04,
-        'wp_period': 0.02
+        'moving_time': 0.2,  # Increased for simulation stability
+        'wp_moving_time': 0.1,
+        'wp_accel_time': 0.05,
+        'wp_period': 0.05    # Increased to avoid simulation bug (was 0.02)
     }
     controller = HybridCartesianController(robot, controller_config)
 
