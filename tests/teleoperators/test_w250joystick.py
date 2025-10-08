@@ -234,41 +234,49 @@ def test_get_action_deadzone(connected_w250_teleop):
 
 def test_get_teleop_events_default(connected_w250_teleop):
     """Test getting teleop events with default state."""
+    from lerobot.teleoperators.utils import TeleopEvents
+
     events = connected_w250_teleop.get_teleop_events()
 
-    assert events["is_intervention"] is False
-    assert events["terminate_episode"] is False
-    assert events["success"] is False
-    assert events["rerecord_episode"] is False
+    assert events[TeleopEvents.IS_INTERVENTION] is False
+    assert events[TeleopEvents.TERMINATE_EPISODE] is False
+    assert events[TeleopEvents.SUCCESS] is False
+    assert events[TeleopEvents.RERECORD_EPISODE] is False
 
 
 def test_get_teleop_events_intervention(connected_w250_teleop):
     """Test getting teleop events with intervention active."""
+    from lerobot.teleoperators.utils import TeleopEvents
+
     connected_w250_teleop.joycon_node.intervention_flag = True
 
     events = connected_w250_teleop.get_teleop_events()
 
-    assert events["is_intervention"] is True
+    assert events[TeleopEvents.IS_INTERVENTION] is True
 
 
 def test_get_teleop_events_success(connected_w250_teleop):
     """Test getting teleop events with success status."""
-    connected_w250_teleop.joycon_node.episode_end_status = "success"
+    from lerobot.teleoperators.utils import TeleopEvents
+
+    connected_w250_teleop.joycon_node.episode_end_status = TeleopEvents.SUCCESS
 
     events = connected_w250_teleop.get_teleop_events()
 
-    assert events["success"] is True
-    assert events["terminate_episode"] is False
+    assert events[TeleopEvents.SUCCESS] is True
+    assert events[TeleopEvents.TERMINATE_EPISODE] is False
 
 
 def test_get_teleop_events_rerecord(connected_w250_teleop):
     """Test getting teleop events with rerecord status."""
-    connected_w250_teleop.joycon_node.episode_end_status = "rerecord_episode"
+    from lerobot.teleoperators.utils import TeleopEvents
+
+    connected_w250_teleop.joycon_node.episode_end_status = TeleopEvents.RERECORD_EPISODE
 
     events = connected_w250_teleop.get_teleop_events()
 
-    assert events["rerecord_episode"] is True
-    assert events["terminate_episode"] is True
+    assert events[TeleopEvents.RERECORD_EPISODE] is True
+    assert events[TeleopEvents.TERMINATE_EPISODE] is True
 
 
 def test_get_action_not_connected(w250_teleop):
