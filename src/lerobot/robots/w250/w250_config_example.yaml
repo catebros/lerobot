@@ -1,13 +1,34 @@
-# Configuration example for WidowX 250 (W250) robot arm
+# Configuration example for WidowX 250 (W250) robot arm with ROS2
+#
+# NOTE: When using ROS2, this config does NOT need a port parameter.
+# The Interbotix control node handles the USB connection to the robot.
+#
+# Before using, launch the control node:
+#   $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py \
+#       robot_model:=wx250 \
+#       port:=/dev/ttyUSB0
+#
+# The port is configured in the launch file, not here.
 
-port: /dev/ttyUSB0  # Port to connect to the arm (adjust according to your setup)
+# Robot identification
+robot_model: wx250  # Interbotix model name
+robot_name: wx250   # ROS2 namespace for the robot
 
-# For safety, max_relative_target limits motor movements
-# Set to 5.0 degrees by default, can be adjusted or set to null to remove limit
-max_relative_target: 5.0
+# Motion parameters
+moving_time: 2.0    # Time in seconds for movements (lower = faster)
+accel_time: 0.3     # Acceleration time in seconds
 
-# Disable torque when disconnecting for safety
-disable_torque_on_disconnect: true
+# Gripper parameters
+gripper_pressure: 0.5  # Gripper pressure (0.0-1.0)
+gripper_pressure_lower_limit: 150  # Minimum effort (PWM)
+gripper_pressure_upper_limit: 350  # Maximum effort (PWM)
+
+# Safety parameters
+max_relative_target: 5.0  # Max relative movement per command (degrees)
+disable_torque_on_disconnect: true  # Move to sleep pose on disconnect
+
+# ROS2 settings
+init_node: true  # Let Interbotix API create the ROS2 node
 
 # Camera configuration (optional)
 cameras:

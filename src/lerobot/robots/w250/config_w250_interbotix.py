@@ -58,7 +58,7 @@ class W250InterbotixConfig(RobotConfig):
     gripper_pressure_upper_limit: int = 350  # Maximum effort (PWM)
     
     # ROS2 specific settings
-    init_node: bool = False  # False because LeRobot manages ROS2 node
+    init_node: bool = True  # True - Interbotix API creates robot_manipulation node internally
     use_moveit: bool = False  # Whether to use MoveIt for motion planning
     
     # Camera configurations (inherited from base RobotConfig)

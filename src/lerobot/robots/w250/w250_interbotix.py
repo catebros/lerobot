@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 # Import Interbotix API
-from interbotix_xs_modules.arm import InterbotixManipulatorXS
+from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
 
 # Import LeRobot components  
 from lerobot.cameras.utils import make_cameras_from_configs
@@ -114,18 +114,69 @@ class W250Interbotix(Robot):
         cameras_connected = all(cam.is_connected for cam in self.cameras.values())
         return self._is_connected and cameras_connected
 
+    def _verify_ros2_setup(self) -> None:
+        """
+        Verify ROS2 environment is properly configured
+
+        Checks for common ROS2 setup issues before attempting to connect.
+        """
+        import os
+        import subprocess
+
+        # Check if ROS2 is sourced
+        if 'ROS_DISTRO' not in os.environ:
+            logger.warning(
+                "ROS_DISTRO not found in environment. "
+                "Make sure to source your ROS2 installation:\n"
+                "  $ source /opt/ros/<distro>/setup.bash"
+            )
+
+        # Check if interbotix workspace is sourced (if needed)
+        if 'INTERBOTIX_WS' in os.environ:
+            logger.debug(f"Interbotix workspace: {os.environ['INTERBOTIX_WS']}")
+
+        # Verify control node is running (optional check)
+        try:
+            result = subprocess.run(
+                ['ros2', 'node', 'list'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.returncode == 0:
+                nodes = result.stdout.strip().split('\n')
+                expected_node = f"/{self.config.robot_name}"
+                if not any(expected_node in node for node in nodes):
+                    logger.warning(
+                        f"Control node '{expected_node}' not found in running nodes. "
+                        f"You may need to run:\n"
+                        f"  $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py "
+                        f"robot_model:={self.config.robot_model}"
+                    )
+            else:
+                logger.debug("Could not check ROS2 nodes (ros2 command may not be available)")
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+            logger.debug(f"Could not verify ROS2 node status: {e}")
+
     def connect(self, calibrate: bool = True) -> None:
         """
         Connect to the WidowX-250 robot using Interbotix API
-        
+
         Args:
             calibrate: Whether to calibrate the robot (handled by Interbotix internally)
+
+        Note:
+            For ROS2, ensure the control launch file is running first:
+            $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250
         """
         if self.is_connected:
             raise DeviceAlreadyConnectedError(f"{self} already connected")
 
         logger.info(f"Connecting to {self} using Interbotix API...")
-        
+
+        # Verify ROS2 environment
+        self._verify_ros2_setup()
+
         try:
             # Initialize Interbotix robot
             self.bot = InterbotixManipulatorXS(
@@ -210,16 +261,23 @@ class W250Interbotix(Robot):
                         normalized_pos = self._normalize_position(joint_name, joint_positions[i])
                         self._current_positions[f"{joint_name}.pos"] = normalized_pos
                 
-                # Get gripper position (0=closed, 1=open for LeRobot compatibility)  
-                # Interbotix gripper: higher values = more open
+                # Get gripper position (0=closed, 1=open for LeRobot compatibility)
+                # Interbotix gripper: gripper_command is the current commanded position
                 try:
-                    # Gripper state method may vary by implementation
-                    gripper_pos = 0.0  # Default to closed
-                    # Note: Exact method depends on Interbotix gripper interface
-                    # This might need adjustment based on actual API
+                    if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'gripper_command'):
+                        # Get current gripper command position
+                        raw_gripper_pos = self.bot.gripper.gripper_command
+                        # Normalize to [0, 1] range (0=closed, 1=open)
+                        # Interbotix gripper typically ranges from ~0.015 (closed) to ~0.037 (open)
+                        gripper_min, gripper_max = 0.015, 0.037
+                        gripper_pos = (raw_gripper_pos - gripper_min) / (gripper_max - gripper_min)
+                        gripper_pos = max(0.0, min(1.0, gripper_pos))  # Clamp to [0, 1]
+                    else:
+                        gripper_pos = 0.0
                     self._current_positions["gripper.pos"] = gripper_pos
-                except:
+                except Exception as e:
                     # Fallback if gripper state unavailable
+                    logger.debug(f"Could not read gripper position: {e}")
                     self._current_positions["gripper.pos"] = 0.0
                     
         except Exception as e:
@@ -246,10 +304,10 @@ class W250Interbotix(Robot):
         try:
             # Move to home position
             self.bot.arm.go_to_home_pose()
-            
-            # Open gripper
+
+            # Open gripper (no delay for faster calibration)
             if hasattr(self.bot, 'gripper'):
-                self.bot.gripper.open(delay=1.0)
+                self.bot.gripper.open(delay=0)
             
             # Update positions after calibration
             self._update_positions()
@@ -372,16 +430,16 @@ class W250Interbotix(Robot):
                     idx = self._joint_names.index(joint_name)
                     arm_positions.append(current_joints[idx] if idx < len(current_joints) else 0.0)
             
-            # Send joint position command
-            self.bot.arm.set_joint_positions(arm_positions)
+            # Send joint position command (non-blocking for real-time control)
+            self.bot.arm.set_joint_positions(arm_positions, blocking=False)
             
-            # Handle gripper command
+            # Handle gripper command (no delay for real-time control)
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
                 if gripper_cmd > 0.5:  # Open gripper
-                    self.bot.gripper.open(delay=0.1)
+                    self.bot.gripper.open(delay=0)
                 else:  # Close gripper
-                    self.bot.gripper.close(delay=0.1)
+                    self.bot.gripper.close(delay=0)
             
             logger.debug(f"Sent action to robot: {goal_pos}")
             
