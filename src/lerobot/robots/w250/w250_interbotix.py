@@ -179,6 +179,7 @@ class W250Interbotix(Robot):
 
         try:
             # Initialize Interbotix robot
+            # Note: init_node parameter removed - not supported in this ROS2 version
             self.bot = InterbotixManipulatorXS(
                 robot_model=self.config.robot_model,
                 group_name=self.config.group_name,
@@ -188,8 +189,7 @@ class W250Interbotix(Robot):
                 accel_time=self.config.accel_time,
                 gripper_pressure=self.config.gripper_pressure,
                 gripper_pressure_lower_limit=self.config.gripper_pressure_lower_limit,
-                gripper_pressure_upper_limit=self.config.gripper_pressure_upper_limit,
-                init_node=self.config.init_node
+                gripper_pressure_upper_limit=self.config.gripper_pressure_upper_limit
             )
             
             # Update joint limits from robot info
@@ -262,13 +262,13 @@ class W250Interbotix(Robot):
                         self._current_positions[f"{joint_name}.pos"] = normalized_pos
                 
                 # Get gripper position (0=closed, 1=open for LeRobot compatibility)
-                # Interbotix gripper: gripper_command is the current commanded position
+                # Use get_gripper_position() method from ROS2 API
                 try:
-                    if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'gripper_command'):
-                        # Get current gripper command position
-                        raw_gripper_pos = self.bot.gripper.gripper_command
+                    if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'get_gripper_position'):
+                        # Get current gripper position in radians
+                        raw_gripper_pos = self.bot.gripper.get_gripper_position()
                         # Normalize to [0, 1] range (0=closed, 1=open)
-                        # Interbotix gripper typically ranges from ~0.015 (closed) to ~0.037 (open)
+                        # Interbotix gripper typically ranges from ~0.015 (closed) to ~0.037 (open) radians
                         gripper_min, gripper_max = 0.015, 0.037
                         gripper_pos = (raw_gripper_pos - gripper_min) / (gripper_max - gripper_min)
                         gripper_pos = max(0.0, min(1.0, gripper_pos))  # Clamp to [0, 1]
@@ -332,11 +332,9 @@ class W250Interbotix(Robot):
             # Set conservative movement parameters for safe operation
             # These parameters help prevent sudden movements
             
-            # Configure gripper parameters if available
-            if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'set_pressure'):
-                pressure = getattr(self.config, 'gripper_pressure', 0.5)
-                self.bot.gripper.set_pressure(pressure)
-                logger.debug(f"Set gripper pressure to {pressure}")
+            # Gripper pressure is already configured during initialization
+            # The gripper_pressure parameter is passed to InterbotixManipulatorXS constructor
+            logger.debug(f"Gripper pressure configured at initialization: {self.config.gripper_pressure}")
             
             # Set operating mode to position control for all joints
             try:

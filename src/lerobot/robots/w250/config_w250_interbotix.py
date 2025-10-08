@@ -58,7 +58,8 @@ class W250InterbotixConfig(RobotConfig):
     gripper_pressure_upper_limit: int = 350  # Maximum effort (PWM)
     
     # ROS2 specific settings
-    init_node: bool = True  # True - Interbotix API creates robot_manipulation node internally
+    # Note: init_node parameter removed - not supported in this Interbotix API version
+    # The API creates the ROS2 node automatically
     use_moveit: bool = False  # Whether to use MoveIt for motion planning
     
     # Camera configurations (inherited from base RobotConfig)
