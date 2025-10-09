@@ -482,39 +482,25 @@ class W250Interbotix(Robot):
 
         logger.info(f"Disconnecting {self}...")
 
-        # Stop robot movement and disable torque if configured
-        if self.bot and self.config.disable_torque_on_disconnect:
-            try:
-                # Move to sleep position
-                self.bot.arm.go_to_sleep_pose()
-                logger.info("Robot moved to sleep position")
-            except Exception as e:
-                logger.warning(f"Could not move to sleep position: {e}")
-
-        # Stop gripper commands to prevent infinite loop
-        if self.bot and hasattr(self.bot, 'gripper'):
-            try:
-                # Release gripper one last time and then stop sending commands
-                self.bot.gripper.release(delay=1.0)  # Use delay to ensure completion
-                logger.info("Gripper released")
-            except Exception as e:
-                logger.warning(f"Could not release gripper: {e}")
-
-        # Disconnect cameras
+        # First, disconnect cameras
         for cam in self.cameras.values():
             try:
                 cam.disconnect()
             except Exception as e:
                 logger.warning(f"Error disconnecting camera: {e}")
 
-        # Clean up robot connection and shutdown ROS2 node
+        # Clean up robot connection and shutdown ROS2 node IMMEDIATELY
+        # Do this BEFORE any sleep pose or gripper commands to prevent loops
         self._is_connected = False
         if self.bot:
             try:
                 # Properly shutdown the Interbotix robot to stop ROS2 node
+                # This should stop all active control loops
                 if hasattr(self.bot, 'shutdown'):
                     self.bot.shutdown()
-                    logger.debug("Interbotix robot shutdown complete")
+                    logger.info("Interbotix robot shutdown complete")
+                else:
+                    logger.warning("Robot shutdown method not available")
             except Exception as e:
                 logger.warning(f"Error during robot shutdown: {e}")
             finally:
