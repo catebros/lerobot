@@ -97,8 +97,8 @@ def test_gripper():
 
         logger.info(f"✓ Command sent in {command_time*1000:.1f}ms")
 
-        # Wait a bit
-        time.sleep(1.5)
+        # Wait for gripper to complete movement (0.5s auto-stop + margin)
+        time.sleep(0.8)
 
         # Read new position
         new_obs = robot.get_observation()
@@ -135,8 +135,8 @@ def test_gripper():
 
         logger.info(f"✓ Command sent in {command_time*1000:.1f}ms")
 
-        # Wait a bit
-        time.sleep(1.5)
+        # Wait for gripper to complete movement (0.5s auto-stop + margin)
+        time.sleep(0.8)
 
         # Read new position
         new_obs = robot.get_observation()
@@ -167,7 +167,7 @@ def test_gripper():
             action = {key: obs[key] for key in robot.action_features.keys() if key in obs}
             action["gripper.pos"] = 1.0
             robot.send_action(action)
-            time.sleep(0.8)
+            time.sleep(1.0)  # Wait for open to complete
             logger.info("  - Opened")
 
             # Close
@@ -175,7 +175,7 @@ def test_gripper():
             action = {key: obs[key] for key in robot.action_features.keys() if key in obs}
             action["gripper.pos"] = 0.0
             robot.send_action(action)
-            time.sleep(0.8)
+            time.sleep(1.0)  # Wait for close to complete
             logger.info("  - Closed")
 
         logger.info("✓ Multiple cycles completed successfully")

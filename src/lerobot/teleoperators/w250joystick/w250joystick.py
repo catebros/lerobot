@@ -168,13 +168,15 @@ class GamepadController(Node):
             wrist_rotate_increment += right_trigger_pressed * self.config.wrist_step_size
         increments["wrist_rotate.pos"] = wrist_rotate_increment
 
-        # Gripper increments - kept unchanged as requested
+        # Gripper control - LB opens, RB closes
+        # Uses small increments (0.02) for fine control
+        # The robot's threshold (0.1) prevents excessive commands
         if self.get_button_state(self.config.button_lb):
-            increments["gripper.pos"] = -0.02  # Open (negative)
+            increments["gripper.pos"] = 0.02  # Open (positive, towards 1.0)
         elif self.get_button_state(self.config.button_rb):
-            increments["gripper.pos"] = 0.02  # Close (positive)
+            increments["gripper.pos"] = -0.02  # Close (negative, towards 0.0)
         else:
-            increments["gripper.pos"] = 0.0
+            increments["gripper.pos"] = 0.0  # No change
 
         return increments
 

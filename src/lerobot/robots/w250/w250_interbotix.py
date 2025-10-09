@@ -37,12 +37,24 @@ logger = logging.getLogger(__name__)
 class W250Interbotix(Robot):
     """
     WidowX-250 robot using official Interbotix Python API with ROS2
-    
+
     This implementation provides the same LeRobot interface while using
     the official Interbotix API underneath for maximum compatibility and reliability.
-    
+
     Maintains the same method signatures as the original W250 class for
     seamless integration with existing LeRobot workflows.
+
+    GRIPPER CONTROL FIX:
+    The Interbotix API has a timer callback (tmr_gripper_state) that runs at 50Hz
+    and continuously publishes gripper commands, causing infinite open/close loops.
+
+    Our solution:
+    1. Disable the timer callback immediately after connection (line ~203)
+    2. Publish gripper effort commands directly without triggering the timer
+    3. Use a background thread to send effort=0 after 0.5s to stop movement
+    4. Clean disconnect that cancels timer and stops all gripper commands
+
+    This ensures the gripper moves smoothly without loops.
     """
 
     config_class = W250InterbotixConfig
