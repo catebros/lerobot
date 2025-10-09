@@ -22,7 +22,7 @@ from ..config import TeleoperatorConfig
 @TeleoperatorConfig.register_subclass("w250joystick")
 @dataclass
 class W250JoystickConfig(TeleoperatorConfig):
-    """Configuration for Logitech F710 gamepad teleoperator using ROS2."""
+    """Configuration for PS3 gamepad teleoperator using ROS2."""
 
     # ROS2 settings
     ros2_node_name: str = "w250_gamepad_teleop"
@@ -38,30 +38,30 @@ class W250JoystickConfig(TeleoperatorConfig):
     z_step_size: float = 0.01  # Elbow increment
     wrist_step_size: float = 0.008  # Wrist angle/rotate increment
 
-    # Logitech F710 axis mappings (XInput mode - switch set to X)
+    # PS3 controller axis mappings
     # Left analog stick - Waist and Shoulder control
     left_stick_x_axis: int = 0  # Waist rotation (left/right)
     left_stick_y_axis: int = 1  # Shoulder (up/down)
 
     # Right analog stick - Elbow and Wrist angle control
-    right_stick_x_axis: int = 3  # Wrist angle
-    right_stick_y_axis: int = 4  # Elbow (up/down)
+    right_stick_x_axis: int = 2  # Wrist angle
+    right_stick_y_axis: int = 3  # Elbow (up/down)
 
-    # Triggers - Wrist rotate control
-    left_trigger_axis: int = 2   # Wrist rotate counter-clockwise
-    right_trigger_axis: int = 5  # Wrist rotate clockwise
+    # Triggers - Wrist rotate control (L2/R2)
+    left_trigger_axis: int = 12   # L2 - Wrist rotate counter-clockwise
+    right_trigger_axis: int = 13  # R2 - Wrist rotate clockwise
 
-    # Logitech F710 button mappings (XInput mode)
-    button_a: int = 0       # A button - unused
-    button_b: int = 1       # B button - unused
-    button_x: int = 2       # X button - unused
-    button_y: int = 3       # Y button - Reset to home position
+    # PS3 controller button mappings
+    button_x: int = 14      # X button (Cross) - unused
+    button_circle: int = 13  # Circle button - unused
+    button_square: int = 15  # Square button - unused
+    button_triangle: int = 12  # Triangle button - Reset to home position
 
-    button_lb: int = 4      # LB button - Open gripper
-    button_rb: int = 5      # RB button - Close gripper
+    button_l1: int = 10     # L1 button - Open gripper
+    button_r1: int = 11     # R1 button - Close gripper
 
-    button_back: int = 6    # Back button - Toggle intervention (emergency stop)
-    button_start: int = 7   # Start button - Rerecord episode
+    button_select: int = 0  # Select button - Toggle intervention (emergency stop)
+    button_start: int = 3   # Start button - Rerecord episode
 
-    button_l3: int = 9      # Left stick button - unused
-    button_r3: int = 10     # Right stick button - unused
+    button_l3: int = 1      # Left stick button - unused
+    button_r3: int = 2      # Right stick button - unused
