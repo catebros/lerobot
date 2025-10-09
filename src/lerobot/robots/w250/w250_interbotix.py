@@ -196,10 +196,16 @@ class W250Interbotix(Robot):
             
             # Update joint limits from robot info
             self._update_joint_limits()
-            
+
+            # CRITICAL FIX: Disable the gripper state timer callback that causes infinite loops
+            # This timer callback runs at 50Hz and continuously publishes gripper commands
+            if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'tmr_gripper_state'):
+                self.bot.gripper.tmr_gripper_state.cancel()
+                logger.info("Gripper state timer DISABLED to prevent loops")
+
             # Read initial positions
             self._update_positions()
-            
+
             self._is_connected = True
             
             # Connect cameras
@@ -447,8 +453,8 @@ class W250Interbotix(Robot):
 
                 if command_changed:
                     try:
-                        # CRITICAL FIX: Publish gripper command directly WITHOUT using gripper_controller
-                        # to avoid the timer callback loop issue
+                        # CRITICAL FIX: Use a simple approach - send effort command and let it run
+                        # Since we disabled the timer callback, we need to manage stopping manually
 
                         # Calculate effort (positive=open, negative=close)
                         if gripper_cmd > 0.5:  # Open gripper
@@ -458,27 +464,21 @@ class W250Interbotix(Robot):
                             effort = -self.bot.gripper.gripper_value
                             logger.info(f"Gripper: closing (effort={effort:.1f}) - cmd={gripper_cmd:.3f}")
 
-                        # Get current gripper position
-                        with self.bot.gripper.core.js_mutex:
-                            gripper_pos = self.bot.gripper.core.joint_states.position[
-                                self.bot.gripper.left_finger_index
-                            ]
+                        # Publish the effort command
+                        self.bot.gripper.gripper_command.cmd = effort
+                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                        logger.debug(f"Published gripper effort={effort:.1f}")
 
-                        # Only publish if within limits (same logic as gripper_controller but without the loop)
-                        if (
-                            (effort > 0 and gripper_pos < self.bot.gripper.left_finger_upper_limit)
-                            or (effort < 0 and gripper_pos > self.bot.gripper.left_finger_lower_limit)
-                        ):
-                            # Publish command ONCE without setting gripper_moving flag
-                            # This prevents the timer callback from continuously publishing
-                            self.bot.gripper.gripper_command.cmd = effort
+                        # Schedule a stop command after movement completes
+                        # We'll use a thread to send stop after delay
+                        import threading
+                        def stop_gripper():
+                            time.sleep(0.5)  # Wait for gripper to move
+                            self.bot.gripper.gripper_command.cmd = 0.0
                             self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                            logger.debug("Gripper stopped (effort=0)")
 
-                            # DO NOT set gripper_moving = True to avoid timer callback loop
-                            # The gripper will move and stop naturally at limits
-                            logger.debug(f"Published gripper effort={effort:.1f} (pos={gripper_pos:.4f})")
-                        else:
-                            logger.debug(f"Gripper at limit, not publishing (pos={gripper_pos:.4f})")
+                        threading.Thread(target=stop_gripper, daemon=True).start()
 
                         self._last_gripper_value = gripper_cmd
                     except Exception as e:
