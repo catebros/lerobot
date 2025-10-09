@@ -434,8 +434,8 @@ class W250Interbotix(Robot):
             # Send joint position command (non-blocking for real-time control)
             self.bot.arm.set_joint_positions(arm_positions, blocking=False)
             
-            # Handle gripper command using direct position control
-            # This avoids the infinite loop issue with grasp()/release()
+            # Handle gripper command using gripper_controller with effort control
+            # This uses the low-level PWM controller to avoid the grasp()/release() loops
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
 
@@ -446,20 +446,24 @@ class W250Interbotix(Robot):
                 )
 
                 if command_changed:
-                    # Convert normalized [0, 1] to linear position [m]
-                    # 0.0 = closed (0.015m), 1.0 = open (0.037m)
-                    gripper_min = 0.015  # meters (closed)
-                    gripper_max = 0.037  # meters (open)
-                    linear_position = gripper_min + gripper_cmd * (gripper_max - gripper_min)
-
                     try:
-                        # Use core.robot_write_commands to directly set gripper position
-                        # This is non-blocking and doesn't cause loops
-                        if hasattr(self.bot.gripper.core, 'robot_write_commands'):
-                            self.bot.gripper.core.robot_write_commands('gripper', [linear_position])
-                            logger.info(f"Gripper: position={linear_position:.4f}m - cmd={gripper_cmd:.3f}")
-                        else:
-                            logger.warning("Gripper position control not available")
+                        # Use gripper_controller directly with effort control
+                        # Positive effort = open, Negative effort = close
+                        # delay=0.1 gives time to start moving without blocking too long
+                        if gripper_cmd > 0.5:  # Open gripper
+                            # Positive effort opens the gripper
+                            self.bot.gripper.gripper_controller(
+                                effort=self.bot.gripper.gripper_value,
+                                delay=0.1  # Small delay to initiate movement
+                            )
+                            logger.info(f"Gripper: opening (effort=+{self.bot.gripper.gripper_value:.1f}) - cmd={gripper_cmd:.3f}")
+                        else:  # Close gripper
+                            # Negative effort closes the gripper
+                            self.bot.gripper.gripper_controller(
+                                effort=-self.bot.gripper.gripper_value,
+                                delay=0.1  # Small delay to initiate movement
+                            )
+                            logger.info(f"Gripper: closing (effort=-{self.bot.gripper.gripper_value:.1f}) - cmd={gripper_cmd:.3f}")
 
                         self._last_gripper_value = gripper_cmd
                     except Exception as e:
@@ -488,12 +492,25 @@ class W250Interbotix(Robot):
         # This prevents the gripper from entering a loop during shutdown
         if self.bot and hasattr(self.bot, 'gripper'):
             try:
+                # Stop the gripper state timer callback that runs at 50Hz
+                if hasattr(self.bot.gripper, 'tmr_gripper_state'):
+                    self.bot.gripper.tmr_gripper_state.cancel()
+                    logger.info("Gripper state timer cancelled")
+
+                # Stop any ongoing gripper movement
+                self.bot.gripper.gripper_moving = False
+
+                # Send zero effort command to stop gripper
+                self.bot.gripper.gripper_command.cmd = 0.0
+                self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                logger.info("Gripper stopped (effort=0)")
+
                 # Disable gripper torque to stop all gripper commands immediately
                 if hasattr(self.bot.gripper.core, 'robot_torque_enable'):
                     self.bot.gripper.core.robot_torque_enable('single', 'gripper', False)
                     logger.info("Gripper torque disabled")
             except Exception as e:
-                logger.warning(f"Could not disable gripper torque: {e}")
+                logger.warning(f"Could not stop gripper: {e}")
 
         # Disconnect cameras
         for cam in self.cameras.values():
