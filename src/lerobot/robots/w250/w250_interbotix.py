@@ -478,20 +478,34 @@ class W250Interbotix(Robot):
 
         logger.info(f"Disconnecting {self}...")
 
-        # First, disconnect cameras
+        # CRITICAL: Stop gripper FIRST before any other operations
+        # This prevents the gripper from entering a loop during shutdown
+        if self.bot and hasattr(self.bot, 'gripper'):
+            try:
+                # Disable gripper torque to stop all gripper commands immediately
+                if hasattr(self.bot.gripper.core, 'robot_torque_enable'):
+                    self.bot.gripper.core.robot_torque_enable('single', 'gripper', False)
+                    logger.info("Gripper torque disabled")
+            except Exception as e:
+                logger.warning(f"Could not disable gripper torque: {e}")
+
+        # Disconnect cameras
         for cam in self.cameras.values():
             try:
                 cam.disconnect()
             except Exception as e:
                 logger.warning(f"Error disconnecting camera: {e}")
 
-        # Clean up robot connection and shutdown ROS2 node IMMEDIATELY
-        # Do this BEFORE any sleep pose or gripper commands to prevent loops
+        # Clean up robot connection and shutdown ROS2 node
         self._is_connected = False
         if self.bot:
             try:
-                # Properly shutdown the Interbotix robot to stop ROS2 node
-                # This should stop all active control loops
+                # Disable torque for all motors to stop any ongoing commands
+                if hasattr(self.bot.arm.core, 'robot_torque_enable'):
+                    self.bot.arm.core.robot_torque_enable('group', 'arm', False)
+                    logger.info("Arm torque disabled")
+
+                # Shutdown the ROS2 node
                 if hasattr(self.bot, 'shutdown'):
                     self.bot.shutdown()
                     logger.info("Interbotix robot shutdown complete")
