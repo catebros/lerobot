@@ -434,8 +434,7 @@ class W250Interbotix(Robot):
             # Send joint position command (non-blocking for real-time control)
             self.bot.arm.set_joint_positions(arm_positions, blocking=False)
             
-            # Handle gripper command using set_pressure instead of grasp()/release()
-            # to avoid blocking and loops
+            # Handle gripper command using grasp()/release() with delay=0 to avoid blocking
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
 
@@ -446,23 +445,20 @@ class W250Interbotix(Robot):
                 )
 
                 if command_changed:
-                    # Use set_pressure instead of grasp()/release() to avoid loops
-                    # Pressure: 0.0 = no pressure (open), higher = more pressure (closed)
+                    # Use grasp()/release() with delay=0 to make them non-blocking
+                    # delay=0 returns immediately without waiting for completion
                     try:
                         if gripper_cmd > 0.5:  # Open gripper
-                            # Set low/zero pressure to open
-                            self.bot.gripper.set_pressure(0.0)
-                            logger.info(f"Gripper: opening (pressure=0.0) - cmd={gripper_cmd:.3f}")
+                            self.bot.gripper.release(delay=0)
+                            logger.info(f"Gripper: opening (release) - cmd={gripper_cmd:.3f}")
                         else:  # Close gripper
-                            # Set pressure to grasp (use configured pressure)
-                            target_pressure = self.config.gripper_pressure
-                            self.bot.gripper.set_pressure(target_pressure)
-                            logger.info(f"Gripper: closing (pressure={target_pressure}) - cmd={gripper_cmd:.3f}")
+                            self.bot.gripper.grasp(delay=0)
+                            logger.info(f"Gripper: closing (grasp) - cmd={gripper_cmd:.3f}")
 
                         self._last_gripper_value = gripper_cmd
                     except Exception as e:
-                        logger.warning(f"Failed to set gripper pressure: {e}")
-                        # Fallback: Don't send any gripper command if pressure control fails
+                        logger.warning(f"Failed to command gripper: {e}")
+                        # Fallback: Don't send any gripper command if it fails
                 else:
                     logger.debug(f"Gripper: no change (current={self._last_gripper_value:.3f}, new={gripper_cmd:.3f})")
             
