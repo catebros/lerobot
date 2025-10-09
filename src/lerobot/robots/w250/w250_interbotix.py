@@ -434,7 +434,8 @@ class W250Interbotix(Robot):
             # Send joint position command (non-blocking for real-time control)
             self.bot.arm.set_joint_positions(arm_positions, blocking=False)
             
-            # Handle gripper command using grasp()/release() with delay=0 to avoid blocking
+            # Handle gripper command using direct position control
+            # This avoids the infinite loop issue with grasp()/release()
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
 
@@ -445,15 +446,20 @@ class W250Interbotix(Robot):
                 )
 
                 if command_changed:
-                    # Use grasp()/release() with delay=0 to make them non-blocking
-                    # delay=0 returns immediately without waiting for completion
+                    # Convert normalized [0, 1] to linear position [m]
+                    # 0.0 = closed (0.015m), 1.0 = open (0.037m)
+                    gripper_min = 0.015  # meters (closed)
+                    gripper_max = 0.037  # meters (open)
+                    linear_position = gripper_min + gripper_cmd * (gripper_max - gripper_min)
+
                     try:
-                        if gripper_cmd > 0.5:  # Open gripper
-                            self.bot.gripper.release(delay=0)
-                            logger.info(f"Gripper: opening (release) - cmd={gripper_cmd:.3f}")
-                        else:  # Close gripper
-                            self.bot.gripper.grasp(delay=0)
-                            logger.info(f"Gripper: closing (grasp) - cmd={gripper_cmd:.3f}")
+                        # Use core.robot_write_commands to directly set gripper position
+                        # This is non-blocking and doesn't cause loops
+                        if hasattr(self.bot.gripper.core, 'robot_write_commands'):
+                            self.bot.gripper.core.robot_write_commands('gripper', [linear_position])
+                            logger.info(f"Gripper: position={linear_position:.4f}m - cmd={gripper_cmd:.3f}")
+                        else:
+                            logger.warning("Gripper position control not available")
 
                         self._last_gripper_value = gripper_cmd
                     except Exception as e:
