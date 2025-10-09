@@ -52,7 +52,7 @@ gripper_action_map = {
 
 
 class GamepadController(Node):
-    """ROS2 node to receive Joy messages from PS3 gamepad."""
+    """ROS2 node to receive Joy messages from Logitech F710 gamepad."""
 
     def __init__(self, config: W250JoystickConfig):
         super().__init__(config.ros2_node_name)
@@ -81,18 +81,18 @@ class GamepadController(Node):
         self.subscription = self.create_subscription(Joy, config.joy_topic, self.joy_callback, 10)
 
         self.get_logger().info(
-            f"W250 PS3 Gamepad Controller initialized, listening to {config.joy_topic}"
+            f"W250 Logitech F710 Gamepad Controller initialized, listening to {config.joy_topic}"
         )
-        self.get_logger().info("=== PS3 Gamepad Controls ===")
-        self.get_logger().info("  Left Stick X: Waist rotation (left/right)")
-        self.get_logger().info("  Left Stick Y: Shoulder (up/down)")
-        self.get_logger().info("  Right Stick X: Wrist angle")
+        self.get_logger().info("=== Logitech F710 Gamepad Controls (5 DOF) ===")
+        self.get_logger().info("  Left Stick X:  Waist rotation (left/right)")
+        self.get_logger().info("  Left Stick Y:  Shoulder (up/down)")
         self.get_logger().info("  Right Stick Y: Elbow (up/down)")
-        self.get_logger().info("  L2/R2 (Triggers): Wrist rotate")
-        self.get_logger().info("  L1: Open gripper")
-        self.get_logger().info("  R1: Close gripper")
-        self.get_logger().info("  Select: Toggle intervention (emergency stop)")
-        self.get_logger().info("  Triangle: Reset to home position")
+        self.get_logger().info("  Right Stick X: Wrist angle (left/right)")
+        self.get_logger().info("  LT/RT (Triggers): Wrist rotate")
+        self.get_logger().info("  LB: Open gripper")
+        self.get_logger().info("  RB: Close gripper")
+        self.get_logger().info("  Back: Toggle intervention (emergency stop)")
+        self.get_logger().info("  Y: Reset to home position")
         self.get_logger().info("  Start: Rerecord episode")
 
     def joy_callback(self, msg: Joy):
@@ -126,7 +126,7 @@ class GamepadController(Node):
             return max(-1.0, min(1.0, position))
 
     def get_joint_increments(self) -> Dict[str, float]:
-        """Calculate joint increments from PS3 gamepad input."""
+        """Calculate joint increments from Logitech F710 gamepad input."""
         increments = {}
 
         axes = self.get_axes_values()
@@ -151,13 +151,15 @@ class GamepadController(Node):
         right_stick_x = self._apply_deadzone(axes[self.config.right_stick_x_axis] if len(axes) > self.config.right_stick_x_axis else 0.0)
         increments["wrist_angle.pos"] = right_stick_x * self.config.wrist_step_size
 
-        # Triggers control - Wrist rotate (L2/R2 buttons on PS3)
-        # On PS3, L2/R2 are buttons, not analog axes
+        # Triggers control - Wrist rotate (analog triggers on Logitech F710)
+        # On Logitech F710, LT/RT are analog axes (range -1 to 1, rest at 0)
         wrist_rotate_increment = 0.0
-        if self.get_button_state(self.config.left_trigger_axis):  # L2 pressed
-            wrist_rotate_increment -= self.config.wrist_step_size
-        if self.get_button_state(self.config.right_trigger_axis):  # R2 pressed
-            wrist_rotate_increment += self.config.wrist_step_size
+        left_trigger = self._apply_deadzone(axes[self.config.left_trigger_axis] if len(axes) > self.config.left_trigger_axis else 0.0)
+        right_trigger = self._apply_deadzone(axes[self.config.right_trigger_axis] if len(axes) > self.config.right_trigger_axis else 0.0)
+
+        # Triggers return negative values when pressed on Logitech F710
+        # LT negative = rotate counter-clockwise, RT negative = rotate clockwise
+        wrist_rotate_increment = (right_trigger - left_trigger) * self.config.wrist_step_size
         increments["wrist_rotate.pos"] = wrist_rotate_increment
 
         # Gripper control - L1 opens, R1 closes
@@ -213,14 +215,23 @@ class GamepadController(Node):
 
 class W250JoystickTeleop(Teleoperator):
     """
-    Teleop class to use PS3 gamepad inputs via ROS2 for control.
-    Requires ROS2 joy node to be running with connected PS3 gamepad.
+    Teleop class to use Logitech F710 gamepad inputs via ROS2 for control.
+    Requires ROS2 joy node to be running with connected Logitech F710 gamepad.
+
+    Controls all 5 DOF of the W250 robot arm:
+    - Waist rotation (left stick X)
+    - Shoulder (left stick Y)
+    - Elbow (right stick Y)
+    - Wrist angle (right stick X)
+    - Wrist rotate (LT/RT triggers)
+    Plus gripper control (LB/RB buttons)
 
     To use this teleoperator:
-    1. Connect your PS3 gamepad via USB or Bluetooth
-    2. Install and run the ROS2 joy node:
+    1. Connect your Logitech F710 gamepad via USB
+    2. Set the mode switch on back to 'X' (XInput mode)
+    3. Install and run the ROS2 joy node:
        ros2 run joy joy_node
-    3. Run your robot control with this teleoperator
+    4. Run your robot control with this teleoperator
     """
 
     config_class = W250JoystickConfig
@@ -265,7 +276,7 @@ class W250JoystickTeleop(Teleoperator):
         self.ros_thread = threading.Thread(target=self._spin_ros, daemon=True)
         self.ros_thread.start()
 
-        logging.info("W250 PS3 gamepad teleoperator connected and listening for joy messages")
+        logging.info("W250 Logitech F710 gamepad teleoperator connected and listening for joy messages")
 
     def _spin_ros(self):
         """Spin ROS2 executor in a separate thread."""
@@ -345,7 +356,7 @@ class W250JoystickTeleop(Teleoperator):
             self.ros_thread.join(timeout=1.0)
             self.ros_thread = None
 
-        logging.info("W250 PS3 gamepad teleoperator disconnected")
+        logging.info("W250 Logitech F710 gamepad teleoperator disconnected")
 
     def is_connected(self) -> bool:
         """Check if gamepad controller is connected."""
