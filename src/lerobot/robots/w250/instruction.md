@@ -16,3 +16,6 @@ source ~/interbotix_ws/install/setup.bash
 cd ~/lerobot/tests
 
 python test_w250_connection.py
+
+
+ros2 run joy joy_node

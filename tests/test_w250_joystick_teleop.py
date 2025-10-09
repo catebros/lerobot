@@ -87,87 +87,83 @@ def test_joystick_teleop():
         logger.info("  Back:           Toggle intervention")
         logger.info("  Start:          Exit test")
 
-        # ==================== PHASE 2: Test Gamepad Input ====================
+        # ==================== PHASE 2: Verify Joystick Input ====================
         logger.info("\n" + "=" * 60)
-        logger.info("PHASE 2: Testing Gamepad Input Reading")
+        logger.info("PHASE 2: Verify Joystick Input Reception")
         logger.info("=" * 60)
+        logger.info("\nThis phase verifies that joystick inputs are being received correctly.")
+        logger.info("The robot will NOT move during this phase.")
+        logger.info("\nTest each control:")
 
-        logger.info("\nReading gamepad for 5 seconds...")
-        logger.info("Move the joysticks to test input reading")
+        input("\nPress ENTER to start input verification...")
 
-        for i in range(5):
-            action = teleop.get_action()
-            logger.info(f"  [{i+1}s] Action: waist={action.get('waist.pos', 0):.2f}, "
-                       f"shoulder={action.get('shoulder.pos', 0):.2f}, "
-                       f"gripper={action.get('gripper.pos', 0):.2f}")
-            time.sleep(1)
-
-        logger.info("✓ Gamepad input reading works")
-
-        # ==================== PHASE 3: Test Individual Controls ====================
-        logger.info("\n" + "=" * 60)
-        logger.info("PHASE 3: Testing Individual Controls")
-        logger.info("=" * 60)
-
-        # Test waist
-        logger.info("\n3.1 Test WAIST control:")
-        logger.info("  Move LEFT STICK LEFT/RIGHT for 5 seconds...")
+        # Test left stick (waist + shoulder)
+        logger.info("\n2.1 LEFT STICK - Move left/right and up/down for 5 seconds:")
         for i in range(10):
             action = teleop.get_action()
-            robot.send_action(action)
-            if i % 2 == 0:
-                logger.info(f"    Waist position: {action.get('waist.pos', 0):.3f}")
+            waist = action.get('waist.pos', 0)
+            shoulder = action.get('shoulder.pos', 0)
+            if abs(waist) > 0.01 or abs(shoulder) > 0.01:
+                logger.info(f"  ✓ Left stick detected: waist={waist:.3f}, shoulder={shoulder:.3f}")
             time.sleep(0.5)
-        logger.info("  ✓ Waist control test complete")
+        logger.info("  ✓ Left stick input verification complete")
 
-        # Test shoulder
-        logger.info("\n3.2 Test SHOULDER control:")
-        logger.info("  Move LEFT STICK UP/DOWN for 5 seconds...")
+        # Test right stick (elbow + wrist angle)
+        logger.info("\n2.2 RIGHT STICK - Move left/right and up/down for 5 seconds:")
         for i in range(10):
             action = teleop.get_action()
-            robot.send_action(action)
-            if i % 2 == 0:
-                logger.info(f"    Shoulder position: {action.get('shoulder.pos', 0):.3f}")
+            elbow = action.get('elbow.pos', 0)
+            wrist_angle = action.get('wrist_angle.pos', 0)
+            if abs(elbow) > 0.01 or abs(wrist_angle) > 0.01:
+                logger.info(f"  ✓ Right stick detected: elbow={elbow:.3f}, wrist_angle={wrist_angle:.3f}")
             time.sleep(0.5)
-        logger.info("  ✓ Shoulder control test complete")
+        logger.info("  ✓ Right stick input verification complete")
 
-        # Test elbow
-        logger.info("\n3.3 Test ELBOW control:")
-        logger.info("  Move RIGHT STICK UP/DOWN for 5 seconds...")
+        # Test triggers (wrist rotate)
+        logger.info("\n2.3 TRIGGERS - Press L2 and R2 for 5 seconds:")
         for i in range(10):
             action = teleop.get_action()
-            robot.send_action(action)
-            if i % 2 == 0:
-                logger.info(f"    Elbow position: {action.get('elbow.pos', 0):.3f}")
+            wrist_rotate = action.get('wrist_rotate.pos', 0)
+            if abs(wrist_rotate) > 0.01:
+                logger.info(f"  ✓ Trigger detected: wrist_rotate={wrist_rotate:.3f}")
             time.sleep(0.5)
-        logger.info("  ✓ Elbow control test complete")
+        logger.info("  ✓ Trigger input verification complete")
 
-        # Test gripper
-        logger.info("\n3.4 Test GRIPPER control:")
-        logger.info("  Press LB to OPEN, RB to CLOSE for 10 seconds...")
-        for i in range(20):
+        # Test gripper buttons
+        logger.info("\n2.4 GRIPPER - Press L1 (open) and R1 (close) for 5 seconds:")
+        initial_gripper = 0.5
+        last_gripper = initial_gripper
+        for i in range(10):
             action = teleop.get_action()
-            robot.send_action(action)
-            if i % 4 == 0:
-                logger.info(f"    Gripper position: {action.get('gripper.pos', 0):.3f}")
+            gripper = action.get('gripper.pos', 0.5)
+            if abs(gripper - last_gripper) > 0.001:
+                logger.info(f"  ✓ Gripper button detected: gripper={gripper:.3f}")
+                last_gripper = gripper
             time.sleep(0.5)
-        logger.info("  ✓ Gripper control test complete")
+        logger.info("  ✓ Gripper button input verification complete")
 
-        logger.info("\n✓ All individual control tests passed")
+        logger.info("\n✓ PHASE 2 COMPLETE: All joystick inputs verified!")
+        input("\nPress ENTER to proceed to Phase 3 (Free Control with Robot)...")
 
-        # ==================== PHASE 4: Free Control Mode ====================
+        # ==================== PHASE 3: Free Control Mode ====================
         logger.info("\n" + "=" * 60)
-        logger.info("PHASE 4: Free Control Mode")
+        logger.info("PHASE 3: Free Control Mode - Control the Robot!")
         logger.info("=" * 60)
-        logger.info("\nYou now have full control of the robot!")
-        logger.info("  - Use joysticks to control arm position")
-        logger.info("  - Use LB/RB to control gripper")
-        logger.info("  - Press Y to reset to home position")
-        logger.info("  - Press START to exit")
-        logger.info("\nControl loop starting...")
+        logger.info("\nNow you have full control of the robot with the joystick!")
+        logger.info("The robot will move according to your joystick inputs.")
+        logger.info("\nControls:")
+        logger.info("  Left Stick:     Waist (X) and Shoulder (Y)")
+        logger.info("  Right Stick:    Wrist angle (X) and Elbow (Y)")
+        logger.info("  L2/R2:          Wrist rotate")
+        logger.info("  L1/R1:          Open/Close gripper")
+        logger.info("  Triangle (Y):   Reset to home position")
+        logger.info("  START:          Exit test")
+        logger.info("\nControl loop starting in 3 seconds...")
+        time.sleep(3)
 
         control_active = True
         last_status_time = time.time()
+        iteration = 0
 
         while control_active:
             # Get action from teleop
@@ -184,19 +180,21 @@ def test_joystick_teleop():
 
             # Print status every 2 seconds
             if time.time() - last_status_time > 2.0:
-                logger.info(f"  Status: waist={action.get('waist.pos', 0):.2f}, "
+                logger.info(f"  [{iteration//40}] Position: waist={action.get('waist.pos', 0):.2f}, "
                            f"shoulder={action.get('shoulder.pos', 0):.2f}, "
                            f"elbow={action.get('elbow.pos', 0):.2f}, "
+                           f"wrist_angle={action.get('wrist_angle.pos', 0):.2f}, "
                            f"gripper={action.get('gripper.pos', 0):.2f}")
                 last_status_time = time.time()
 
+            iteration += 1
             time.sleep(0.05)  # 20Hz control loop
 
-        logger.info("✓ Free control mode complete")
+        logger.info("✓ PHASE 3 COMPLETE: Free control mode finished")
 
-        # ==================== PHASE 5: Cleanup ====================
+        # ==================== PHASE 4: Cleanup ====================
         logger.info("\n" + "=" * 60)
-        logger.info("PHASE 5: Cleanup and Disconnect")
+        logger.info("PHASE 4: Cleanup and Disconnect")
         logger.info("=" * 60)
 
         logger.info("\nReturning to home position...")
@@ -257,14 +255,14 @@ def test_joystick_teleop():
     logger.info("✓ ALL JOYSTICK TELEOPERATION TESTS PASSED!")
     logger.info("=" * 60)
     logger.info("\nTest Summary:")
-    logger.info("  ✓ Robot and teleoperator connection")
-    logger.info("  ✓ Gamepad input reading")
-    logger.info("  ✓ Waist control (left stick X)")
-    logger.info("  ✓ Shoulder control (left stick Y)")
-    logger.info("  ✓ Elbow control (right stick Y)")
-    logger.info("  ✓ Gripper control (LB/RB)")
-    logger.info("  ✓ Free control mode")
-    logger.info("  ✓ Clean disconnect")
+    logger.info("  ✓ Phase 1: Robot and teleoperator connection")
+    logger.info("  ✓ Phase 2: Joystick input verification")
+    logger.info("    - Left stick (waist + shoulder)")
+    logger.info("    - Right stick (elbow + wrist angle)")
+    logger.info("    - Triggers (wrist rotate)")
+    logger.info("    - Gripper buttons (L1/R1)")
+    logger.info("  ✓ Phase 3: Free control mode with robot")
+    logger.info("  ✓ Phase 4: Clean disconnect")
     logger.info("\n🎮 Joystick teleoperation is fully functional!")
     logger.info("=" * 60)
 

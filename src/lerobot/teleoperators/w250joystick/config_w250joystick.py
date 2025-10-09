@@ -32,11 +32,12 @@ class W250JoystickConfig(TeleoperatorConfig):
     use_gripper: bool = True
     deadzone: float = 0.1
 
-    # Step sizes for movement
-    x_step_size: float = 0.01  # Shoulder increment
-    y_step_size: float = 0.01  # Waist increment
-    z_step_size: float = 0.01  # Elbow increment
-    wrist_step_size: float = 0.008  # Wrist angle/rotate increment
+    # Step sizes for movement (larger values = faster/bigger movements)
+    x_step_size: float = 0.03  # Shoulder increment
+    y_step_size: float = 0.03  # Waist increment
+    z_step_size: float = 0.03  # Elbow increment
+    wrist_step_size: float = 0.025  # Wrist angle/rotate increment
+    gripper_step_size: float = 0.05  # Gripper increment
 
     # PS3 controller axis mappings
     # Left analog stick - Waist and Shoulder control
