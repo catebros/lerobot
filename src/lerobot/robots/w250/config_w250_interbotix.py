@@ -36,7 +36,7 @@ class W250InterbotixConfig(RobotConfig):
     the official Interbotix ROS2 implementation underneath.
     """
     
-    # Robot model name for Interbotix API (closest match to WidowX-250)
+    # Robot model name for Interbotix API 
     robot_model: str = "wx250"
     
     # ROS2 namespace for the robot
