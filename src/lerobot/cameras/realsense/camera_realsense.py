@@ -26,8 +26,11 @@ import numpy as np
 
 try:
     import pyrealsense2 as rs
+    REALSENSE_AVAILABLE = True
 except Exception as e:
     logging.info(f"Could not import realsense: {e}")
+    REALSENSE_AVAILABLE = False
+    rs = None  # Set to None to avoid NameError
 
 from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
@@ -206,6 +209,12 @@ class RealSenseCamera(Camera):
             OSError: If pyrealsense2 is not installed.
             ImportError: If pyrealsense2 is not installed.
         """
+        if not REALSENSE_AVAILABLE or rs is None:
+            raise ImportError(
+                "pyrealsense2 is not installed or not importable. "
+                "Install it with: pip install pyrealsense2"
+            )
+
         found_cameras_info = []
         context = rs.context()
         devices = context.query_devices()

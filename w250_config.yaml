@@ -1,0 +1,60 @@
+# Configuration for WidowX 250 (W250) robot with cameras
+#
+# This configuration specifies only the two camera devices you want to use:
+# /dev/video4 and /dev/video10
+
+# Robot identification
+robot_model: wx250  # Interbotix model name
+robot_name: wx250   # ROS2 namespace for the robot
+
+# Motion parameters
+moving_time: 2.0    # Time in seconds for movements (lower = faster)
+accel_time: 0.3     # Acceleration time in seconds
+
+# Gripper parameters
+gripper_pressure: 0.5  # Gripper pressure (0.0-1.0)
+gripper_pressure_lower_limit: 150  # Minimum effort (PWM)
+gripper_pressure_upper_limit: 350  # Maximum effort (PWM)
+
+# Safety parameters
+max_relative_target: 5.0  # Max relative movement per command (degrees)
+disable_torque_on_disconnect: true  # Move to sleep pose on disconnect
+
+# ROS2 settings
+init_node: true  # Let Interbotix API create the ROS2 node
+
+# Camera configuration - Using RealSense cameras by serial number
+# This is more reliable than using /dev/video* paths
+# Serial numbers detected: 220322061194 and 220222065523
+cameras:
+  camera_1:
+    type: intelrealsense
+    serial_number_or_name: "220322061194"
+    fps: 30
+    width: 640
+    height: 480
+    color_mode: rgb
+    use_depth: false  # Disabled to reduce USB bandwidth (both cameras on same bus)
+  camera_2:
+    type: intelrealsense
+    serial_number_or_name: "220222065523"
+    fps: 30
+    width: 640
+    height: 480
+    color_mode: rgb
+    use_depth: false  # Disabled to reduce USB bandwidth (both cameras on same bus)
+# cameras:
+#   camera_1:
+#     type: opencv
+#     index_or_path: /dev/video4
+#     fps: 30
+#     width: 640
+#     height: 480
+#     color_mode: rgb
+#   camera_2:
+#     type: opencv
+#     index_or_path: /dev/video10
+#     fps: 30
+#     width: 640
+#     height: 480
+#     color_mode: rgb
