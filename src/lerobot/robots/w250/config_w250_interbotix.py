@@ -18,15 +18,17 @@ Configuration class for WidowX-250 robot using Interbotix ROS2 API
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Optional
 from pathlib import Path
 
 # Import the base Robot configuration
 from ..robot import RobotConfig
+from lerobot.cameras import CameraConfig
 
 logger = logging.getLogger(__name__)
 
 
+@RobotConfig.register_subclass("w250_interbotix")
 @dataclass
 class W250InterbotixConfig(RobotConfig):
     """
@@ -63,7 +65,7 @@ class W250InterbotixConfig(RobotConfig):
     use_moveit: bool = False  # Whether to use MoveIt for motion planning
     
     # Camera configurations (inherited from base RobotConfig)
-    cameras: Dict[str, Any] = field(default_factory=dict)
+    cameras: dict[str, CameraConfig] = field(default_factory=dict)
     
     # Motor calibration settings
     calibration_dir: Path = Path("~/.cache/huggingface/lerobot/calibration")
@@ -105,10 +107,3 @@ class W250InterbotixConfig(RobotConfig):
         logger.info(f"  Group name: {self.group_name}")
         logger.info(f"  Moving time: {self.moving_time}s")
         logger.info(f"  Gripper pressure: {self.gripper_pressure}")
-
-
-# Register this configuration class
-@RobotConfig.register_subclass("w250_interbotix")
-class W250InterbotixConfigRegistered(W250InterbotixConfig):
-    """Registered version of W250InterbotixConfig for LeRobot framework"""
-    pass

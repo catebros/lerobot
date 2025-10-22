@@ -33,6 +33,8 @@ except ImportError:
         "https://docs.ros.org/en/rolling/Installation.html"
     )
 
+from lerobot.robots.w250.constants import W250_REST_POSITION
+
 from ..teleoperator import Teleoperator
 from ..utils import TeleopEvents
 from .config_w250joystick import W250JoystickConfig
@@ -92,7 +94,7 @@ class GamepadController(Node):
         self.get_logger().info("  LB: Open gripper")
         self.get_logger().info("  RB: Close gripper")
         self.get_logger().info("  Back: Toggle intervention (emergency stop)")
-        self.get_logger().info("  Y: Reset to home position")
+        self.get_logger().info("  Y: Reset to rest position (tucked/safe)")
         self.get_logger().info("  Start: Rerecord episode")
 
     def joy_callback(self, msg: Joy):
@@ -187,12 +189,23 @@ class GamepadController(Node):
         return new_positions
 
     def reset_to_home(self):
-        """Reset all joints to home position."""
-        for joint in self.current_positions:
-            if joint == "gripper.pos":
-                self.current_positions[joint] = 0.5  # Half-open
-            else:
-                self.current_positions[joint] = 0.0  # Center
+        """Reset all joints to rest position (safe, tucked configuration)."""
+        # Use the standard W250 rest position defined in constants
+        # This is a safe, compact position for resetting between episodes
+        self.current_positions.update(W250_REST_POSITION)
+
+    def sync_positions(self, robot_positions: Dict[str, float]):
+        """
+        Sync joystick's internal position tracking with robot's actual positions.
+        This prevents unwanted movements when starting teleoperation.
+
+        Args:
+            robot_positions: Dictionary of joint positions from robot (e.g., from robot.get_observation())
+        """
+        for joint_key in self.current_positions:
+            if joint_key in robot_positions:
+                self.current_positions[joint_key] = robot_positions[joint_key]
+                self.get_logger().info(f"Synced {joint_key}: {robot_positions[joint_key]:.3f}")
 
     def update_state(self):
         """Update episode control state based on button presses."""
@@ -285,8 +298,22 @@ class W250JoystickTeleop(Teleoperator):
         except Exception as e:
             logging.error(f"Error in ROS2 spin: {e}")
 
+    def sync_with_robot(self, robot_observation: dict[str, Any]) -> None:
+        """
+        Sync teleoperator's position tracking with the robot's actual current positions.
+        Call this after connecting and before starting teleoperation to prevent unwanted movements.
+
+        Args:
+            robot_observation: Observation dictionary from robot.get_observation()
+        """
+        if self.gamepad_node is None:
+            raise RuntimeError("Gamepad controller not connected. Call connect() first.")
+
+        self.gamepad_node.sync_positions(robot_observation)
+        logging.info("Joystick positions synced with robot state")
+
     def get_action(self) -> dict[str, Any]:
-        """Get action from PS3 gamepad inputs - returns absolute joint positions."""
+        """Get action from gamepad inputs - returns absolute joint positions."""
         if self.gamepad_node is None:
             raise RuntimeError("Gamepad controller not connected. Call connect() first.")
 

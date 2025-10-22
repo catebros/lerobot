@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/Cate/OneDrive - IE University/Extra-Curriculars/Cyphy Life/w250_joystick/**)"
+      "Read(//c/Users/Cate/OneDrive - IE University/Extra-Curriculars/Cyphy Life/w250_joystick/**)",
+      "Read(//home/cbarbero/.cache/huggingface/lerobot/myusername/my_widowx_dataset/**)",
+      "Read(//home/cbarbero/.cache/huggingface/lerobot/myusername/**)",
+      "Bash(kill -9 13222)",
+      "Read(//dev/**)",
+      "Bash(dmesg)",
+      "Read(//home/cbarbero/.ros/log/2025-10-20-12-12-26-417863-cbarbero-IT13-14512/**)"
     ],
     "deny": [],
     "ask": []

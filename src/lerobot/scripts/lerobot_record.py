@@ -97,6 +97,7 @@ from lerobot.robots import (  # noqa: F401
     make_robot_from_config,
     so100_follower,
     so101_follower,
+    w250,
 )
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
@@ -107,6 +108,7 @@ from lerobot.teleoperators import (  # noqa: F401
     make_teleoperator_from_config,
     so100_leader,
     so101_leader,
+    w250joystick
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.constants import ACTION, OBS_STR
@@ -447,6 +449,16 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     robot.connect()
     if teleop is not None:
         teleop.connect()
+
+        # Sync teleoperator position tracking with robot's actual positions
+        # This prevents unwanted movements at the start of recording
+        if hasattr(teleop, 'sync_with_robot'):
+            try:
+                robot_obs = robot.get_observation()
+                teleop.sync_with_robot(robot_obs)
+                logging.info("Teleoperator synced with robot positions")
+            except Exception as e:
+                logging.warning(f"Could not sync teleoperator with robot: {e}")
 
     listener, events = init_keyboard_listener()
 

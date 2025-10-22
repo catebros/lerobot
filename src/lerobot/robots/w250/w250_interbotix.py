@@ -30,6 +30,7 @@ from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnected
 from ..robot import Robot
 from ..utils import ensure_safe_goal_position
 from .config_w250_interbotix import W250InterbotixConfig
+from .constants import W250_REST_POSITION
 
 logger = logging.getLogger(__name__)
 
@@ -312,28 +313,77 @@ class W250Interbotix(Robot):
         """
         Calibration for Interbotix robot
 
-        The Interbotix API handles calibration internally, so we just
-        move the robot to a safe home position.
+        The Interbotix API handles calibration internally. This method performs
+        a two-step calibration process:
+        1. Move to HOME position briefly (all joints at 0)
+        2. Move to REST position (safe, ready-to-record position)
+
+        IMPORTANT WRIST JOINT CLARIFICATION:
+        - wrist_angle: Controls ROTATION/TWIST (like turning a screwdriver)
+                       Set to 0.0 = STRAIGHT/ALIGNED (no twist)
+        - wrist_rotate: Controls PITCH/TILT (up/down angle)
+                        Set to -0.3 in REST = angled down for camera clearance
         """
         if not self.bot:
             logger.error("Robot not connected, cannot calibrate")
             return
 
-        logger.info("Calibrating robot (moving to home position)...")
+        logger.info("Calibrating robot...")
 
         try:
-            # Move to home position
-            self.bot.arm.go_to_home_pose()
+            # Step 1: Move to HOME position (all joints at 0, fully aligned)
+            # [waist, shoulder, elbow, wrist_angle, wrist_rotate] = [0, 0, 0, 0, 0]
+            home_position = [0.0, 0.0, 0.0, 0.0, 0.0]
 
-            # DON'T automatically open gripper during calibration to avoid loops
-            # The gripper will be controlled explicitly by teleoperation
-            # if hasattr(self.bot, 'gripper'):
-            #     self.bot.gripper.release(delay=0)
+            logger.info("Step 1/2: Moving to HOME position (all joints at 0, wrist aligned)")
+            self.bot.arm.set_joint_positions(home_position, blocking=True)
+            time.sleep(0.5)  # Brief pause at home position
+
+            # Step 2: Move to REST position (safe, ready-to-record)
+            # Convert normalized positions to radians for each joint
+            # Joint order: [waist, shoulder, elbow, wrist_angle, wrist_rotate]
+            # IMPORTANT: wrist_angle=0.0 keeps the wrist STRAIGHT/ALIGNED (no twist)
+            rest_positions = [
+                self._denormalize_position("waist", W250_REST_POSITION["waist.pos"]),
+                self._denormalize_position("shoulder", W250_REST_POSITION["shoulder.pos"]),
+                self._denormalize_position("elbow", W250_REST_POSITION["elbow.pos"]),
+                self._denormalize_position("wrist_angle", W250_REST_POSITION["wrist_angle.pos"]),  # 0.0 = straight
+                self._denormalize_position("wrist_rotate", W250_REST_POSITION["wrist_rotate.pos"]),  # -0.3 = angled down
+            ]
+
+            logger.info("Step 2/2: Moving to REST position (safe, ready-to-record, wrist straight)")
+            logger.info(f"  REST normalized: waist={W250_REST_POSITION['waist.pos']:.2f}, "
+                       f"shoulder={W250_REST_POSITION['shoulder.pos']:.2f}, "
+                       f"elbow={W250_REST_POSITION['elbow.pos']:.2f}, "
+                       f"wrist_angle={W250_REST_POSITION['wrist_angle.pos']:.2f} (twist=straight), "
+                       f"wrist_rotate={W250_REST_POSITION['wrist_rotate.pos']:.2f} (tilt=down)")
+            logger.info(f"  REST radians: waist={rest_positions[0]:.3f}, "
+                       f"shoulder={rest_positions[1]:.3f}, "
+                       f"elbow={rest_positions[2]:.3f}, "
+                       f"wrist_angle={rest_positions[3]:.3f} (twist), "
+                       f"wrist_rotate={rest_positions[4]:.3f} (tilt)")
+
+            self.bot.arm.set_joint_positions(rest_positions, blocking=True)
+
+            # Handle gripper - move to closed position (REST position gripper state)
+            if hasattr(self.bot, 'gripper') and W250_REST_POSITION["gripper.pos"] > 0.5:
+                try:
+                    # Close gripper as per REST position
+                    effort = -self.bot.gripper.gripper_value  # Negative to close
+                    self.bot.gripper.gripper_command.cmd = effort
+                    self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                    time.sleep(1.0)  # Wait for gripper to close
+                    # Stop gripper
+                    self.bot.gripper.gripper_command.cmd = 0.0
+                    self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                    logger.info("  Gripper closed")
+                except Exception as e:
+                    logger.warning(f"Could not close gripper: {e}")
 
             # Update positions after calibration
             self._update_positions()
 
-            logger.info("Robot calibration completed (gripper not moved)")
+            logger.info("✓ Calibration completed - Robot at REST position (ready to record)")
 
         except Exception as e:
             logger.error(f"Calibration failed: {e}")
