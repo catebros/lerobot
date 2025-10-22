@@ -75,21 +75,26 @@ class W250Interbotix(Robot):
         self._gripper_threshold: float = 0.1  # Threshold for detecting gripper state change
         
         # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
+        # WidowX 250 6DOF has 6 joints (waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate)
         self._joint_names = [
             "waist",
-            "shoulder", 
+            "shoulder",
             "elbow",
+            "forearm_roll",  # Joint 6 - Forearm rotation
             "wrist_angle",
             "wrist_rotate"
         ]
-        
-        # Position limits for normalization (will be updated from robot info)
+
+        # Position limits for normalization (based on 6DOF specs, will be updated from robot info)
+        # Joint limits from spec: Waist ±180°, Shoulder -108 to 114°, Elbow -123 to 92°,
+        # Forearm Roll ±180°, Wrist Angle -100 to 123°, Wrist Rotate ±180°
         self._joint_limits = {
-            "waist": (-np.pi, np.pi),
-            "shoulder": (-1.88, 1.99),  
-            "elbow": (-2.15, 1.60),
-            "wrist_angle": (-1.745, 1.745),
-            "wrist_rotate": (-3.14, 3.14)  # Can rotate continuously
+            "waist": (-np.pi, np.pi),  # ±180°
+            "shoulder": (-1.88, 1.99),  # -108° to 114° (approx -1.88 to 1.99 rad)
+            "elbow": (-2.15, 1.60),  # -123° to 92° (approx -2.15 to 1.60 rad)
+            "forearm_roll": (-np.pi, np.pi),  # ±180° (Joint 6)
+            "wrist_angle": (-1.745, 2.15),  # -100° to 123° (approx -1.745 to 2.15 rad)
+            "wrist_rotate": (-np.pi, np.pi)  # ±180°
         }
         
         # Initialize cameras
@@ -318,11 +323,10 @@ class W250Interbotix(Robot):
         1. Move to HOME position briefly (all joints at 0)
         2. Move to REST position (safe, ready-to-record position)
 
-        IMPORTANT WRIST JOINT CLARIFICATION:
+        IMPORTANT JOINT CLARIFICATION (6DOF model):
+        - forearm_roll: Controls ROLL/ROTATION of the forearm (Joint 6)
         - wrist_angle: Controls ROTATION/TWIST (like turning a screwdriver)
-                       Set to 0.0 = STRAIGHT/ALIGNED (no twist)
         - wrist_rotate: Controls PITCH/TILT (up/down angle)
-                        Set to -0.3 in REST = angled down for camera clearance
         """
         if not self.bot:
             logger.error("Robot not connected, cannot calibrate")
@@ -332,8 +336,8 @@ class W250Interbotix(Robot):
 
         try:
             # Step 1: Move to HOME position (all joints at 0, fully aligned)
-            # [waist, shoulder, elbow, wrist_angle, wrist_rotate] = [0, 0, 0, 0, 0]
-            home_position = [0.0, 0.0, 0.0, 0.0, 0.0]
+            # [waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate] = [0, 0, 0, 0, 0, 0]
+            home_position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
             logger.info("Step 1/2: Moving to HOME position (all joints at 0, wrist aligned)")
             self.bot.arm.set_joint_positions(home_position, blocking=True)
@@ -341,27 +345,29 @@ class W250Interbotix(Robot):
 
             # Step 2: Move to REST position (safe, ready-to-record)
             # Convert normalized positions to radians for each joint
-            # Joint order: [waist, shoulder, elbow, wrist_angle, wrist_rotate]
-            # IMPORTANT: wrist_angle=0.0 keeps the wrist STRAIGHT/ALIGNED (no twist)
+            # Joint order: [waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate]
             rest_positions = [
                 self._denormalize_position("waist", W250_REST_POSITION["waist.pos"]),
                 self._denormalize_position("shoulder", W250_REST_POSITION["shoulder.pos"]),
                 self._denormalize_position("elbow", W250_REST_POSITION["elbow.pos"]),
-                self._denormalize_position("wrist_angle", W250_REST_POSITION["wrist_angle.pos"]),  # 0.0 = straight
-                self._denormalize_position("wrist_rotate", W250_REST_POSITION["wrist_rotate.pos"]),  # -0.3 = angled down
+                self._denormalize_position("forearm_roll", W250_REST_POSITION["forearm_roll.pos"]),
+                self._denormalize_position("wrist_angle", W250_REST_POSITION["wrist_angle.pos"]),
+                self._denormalize_position("wrist_rotate", W250_REST_POSITION["wrist_rotate.pos"]),
             ]
 
-            logger.info("Step 2/2: Moving to REST position (safe, ready-to-record, wrist straight)")
+            logger.info("Step 2/2: Moving to REST position (safe, ready-to-record)")
             logger.info(f"  REST normalized: waist={W250_REST_POSITION['waist.pos']:.2f}, "
                        f"shoulder={W250_REST_POSITION['shoulder.pos']:.2f}, "
                        f"elbow={W250_REST_POSITION['elbow.pos']:.2f}, "
-                       f"wrist_angle={W250_REST_POSITION['wrist_angle.pos']:.2f} (twist=straight), "
-                       f"wrist_rotate={W250_REST_POSITION['wrist_rotate.pos']:.2f} (tilt=down)")
+                       f"forearm_roll={W250_REST_POSITION['forearm_roll.pos']:.2f}, "
+                       f"wrist_angle={W250_REST_POSITION['wrist_angle.pos']:.2f}, "
+                       f"wrist_rotate={W250_REST_POSITION['wrist_rotate.pos']:.2f}")
             logger.info(f"  REST radians: waist={rest_positions[0]:.3f}, "
                        f"shoulder={rest_positions[1]:.3f}, "
                        f"elbow={rest_positions[2]:.3f}, "
-                       f"wrist_angle={rest_positions[3]:.3f} (twist), "
-                       f"wrist_rotate={rest_positions[4]:.3f} (tilt)")
+                       f"forearm_roll={rest_positions[3]:.3f}, "
+                       f"wrist_angle={rest_positions[4]:.3f}, "
+                       f"wrist_rotate={rest_positions[5]:.3f}")
 
             self.bot.arm.set_joint_positions(rest_positions, blocking=True)
 

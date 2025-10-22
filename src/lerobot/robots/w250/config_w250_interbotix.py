@@ -38,11 +38,11 @@ class W250InterbotixConfig(RobotConfig):
     the official Interbotix ROS2 implementation underneath.
     """
     
-    # Robot model name for Interbotix API 
-    robot_model: str = "wx250"
-    
+    # Robot model name for Interbotix API
+    robot_model: str = "wx250s"
+
     # ROS2 namespace for the robot
-    robot_name: str = "wx250"
+    robot_name: str = "wx250s"
     
     # Joint group name (standard Interbotix configuration)
     group_name: str = "arm"
@@ -50,9 +50,9 @@ class W250InterbotixConfig(RobotConfig):
     # Gripper joint name (standard Interbotix configuration) 
     gripper_name: str = "gripper"
     
-    # Movement timing parameters
-    moving_time: float = 2.0  # Time in seconds for arm movements
-    accel_time: float = 0.3   # Acceleration time in seconds
+    # Movement timing parameters (balanced for smooth responsive control)
+    moving_time: float = 0.5  # Time in seconds for arm movements
+    accel_time: float = 0.15  # Acceleration time in seconds
     
     # Gripper control parameters
     gripper_pressure: float = 0.5  # Gripper pressure (0.0-1.0)

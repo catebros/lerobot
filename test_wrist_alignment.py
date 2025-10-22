@@ -38,15 +38,15 @@ def test_wrist_alignment():
     logger.info("  1. W250 robot connected via USB")
     logger.info("  2. ROS2 control node running:")
     logger.info("     $ ros2 launch interbotix_xsarm_control \\")
-    logger.info("       xsarm_control.launch.py robot_model:=wx250")
+    logger.info("       xsarm_control.launch.py robot_model:=wx250s")
     logger.info("=" * 60)
 
     input("\nPress ENTER when ready to start...")
 
     # Create robot configuration
     config = W250InterbotixConfig(
-        robot_model="wx250",
-        robot_name="wx250",
+        robot_model="wx250s",
+        robot_name="wx250s",
         moving_time=1.5,  # Faster for testing
         accel_time=0.3,
     )

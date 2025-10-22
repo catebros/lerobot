@@ -43,8 +43,8 @@ def test_connection():
     try:
         # Create configuration
         config = W250InterbotixConfig(
-            robot_model="wx250",
-            robot_name="wx250",
+            robot_model="wx250s",
+            robot_name="wx250s",
             moving_time=2.0,
             accel_time=0.3,
         )
@@ -88,7 +88,7 @@ def test_connection():
         logger.info("\n" + "=" * 60)
         logger.info("Attempting to connect to robot...")
         logger.info("NOTE: Make sure the control node is running:")
-        logger.info("  $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250")
+        logger.info("  $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250s")
         logger.info("")
 
         robot.connect(calibrate=False)

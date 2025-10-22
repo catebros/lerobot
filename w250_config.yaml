@@ -4,12 +4,12 @@
 # /dev/video4 and /dev/video10
 
 # Robot identification
-robot_model: wx250  # Interbotix model name
-robot_name: wx250   # ROS2 namespace for the robot
+robot_model: wx250s  # Interbotix model name (6DOF version)
+robot_name: wx250s   # ROS2 namespace for the robot
 
 # Motion parameters
-moving_time: 2.0    # Time in seconds for movements (lower = faster)
-accel_time: 0.3     # Acceleration time in seconds
+moving_time: 0.5    # Time in seconds for movements (0.5 = balanced control)
+accel_time: 0.15    # Acceleration time in seconds
 
 # Gripper parameters
 gripper_pressure: 0.5  # Gripper pressure (0.0-1.0)

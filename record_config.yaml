@@ -1,0 +1,65 @@
+# LeRobot Recording Configuration for WX250s (6DOF)
+
+# Robot configuration
+robot:
+  type: w250_interbotix
+  robot_model: wx250s  # 6DOF version
+  robot_name: wx250s
+  moving_time: 0.5  # Balanced for responsive control (0.5s = good balance)
+  accel_time: 0.15  # Proportional acceleration time
+  gripper_pressure: 0.5
+  gripper_pressure_lower_limit: 150
+  gripper_pressure_upper_limit: 350
+  max_relative_target: null
+  disable_torque_on_disconnect: true
+
+  # Camera configuration - Using RealSense cameras
+  cameras:
+    camera_1:
+      type: intelrealsense
+      serial_number_or_name: "220322061194"
+      fps: 30
+      width: 640
+      height: 480
+      color_mode: rgb
+      use_depth: false  # Set to true if you want depth data
+    camera_2:
+      type: intelrealsense
+      serial_number_or_name: "220222065523"
+      fps: 30
+      width: 640
+      height: 480
+      color_mode: rgb
+      use_depth: false  # Set to true if you want depth data
+
+# Teleoperator configuration (Logitech F710 gamepad)
+teleop:
+  type: w250joystick
+  joy_topic: /joy
+  ros2_node_name: w250_gamepad_teleop
+  use_gripper: true
+  deadzone: 0.1
+
+  # Step sizes balanced for smooth control (moving_time=0.5s)
+  x_step_size: 0.015     # Shoulder
+  y_step_size: 0.015     # Waist
+  z_step_size: 0.015     # Elbow
+  forearm_step_size: 0.012  # Forearm roll (6DOF)
+  wrist_step_size: 0.012 # Wrist angle/rotate
+  gripper_step_size: 0.03  # Gripper
+
+# Dataset configuration
+dataset:
+  repo_id: myusername/my_widowx_dataset
+  root: null  # Will use default cache location
+  num_episodes: 25
+  push_to_hub: false
+  single_task: "Pick and place cube"
+  fps: 30
+  video: true
+  episode_time_s: 60
+  reset_time_s: 60
+
+# Display configuration
+display_data: true
+play_sounds: true

@@ -22,7 +22,7 @@ from ..config import TeleoperatorConfig
 @TeleoperatorConfig.register_subclass("w250joystick")
 @dataclass
 class W250JoystickConfig(TeleoperatorConfig):
-    """Configuration for Logitech F710 gamepad teleoperator using ROS2."""
+    """Configuration for Logitech F710 gamepad teleoperator using ROS2 (6DOF)."""
 
     # ROS2 settings
     ros2_node_name: str = "w250_gamepad_teleop"
@@ -32,12 +32,13 @@ class W250JoystickConfig(TeleoperatorConfig):
     use_gripper: bool = True
     deadzone: float = 0.1
 
-    # Step sizes for movement (larger values = faster/bigger movements)
-    x_step_size: float = 0.03  # Shoulder increment
-    y_step_size: float = 0.03  # Waist increment
-    z_step_size: float = 0.03  # Elbow increment
-    wrist_step_size: float = 0.025  # Wrist angle/rotate increment
-    gripper_step_size: float = 0.05  # Gripper increment
+    # Step sizes balanced for smooth control (moving_time=0.5s)
+    x_step_size: float = 0.015  # Shoulder increment
+    y_step_size: float = 0.015  # Waist increment
+    z_step_size: float = 0.015  # Elbow increment
+    forearm_step_size: float = 0.012  # Forearm roll increment (Joint 6)
+    wrist_step_size: float = 0.012  # Wrist angle/rotate increment
+    gripper_step_size: float = 0.03  # Gripper increment
 
     # Logitech F710 controller axis mappings (XInput mode)
     # Left analog stick - Waist and Shoulder control
@@ -47,6 +48,10 @@ class W250JoystickConfig(TeleoperatorConfig):
     # Right analog stick - Elbow and Wrist angle control
     right_stick_x_axis: int = 3  # Wrist angle
     right_stick_y_axis: int = 4  # Elbow (up/down)
+
+    # D-Pad - Forearm roll control (Joint 6)
+    dpad_x_axis: int = 6  # D-Pad horizontal (left/right) - Forearm roll
+    dpad_y_axis: int = 7  # D-Pad vertical (up/down) - unused
 
     # Triggers - Wrist rotate control (analog axes on Logitech F710)
     left_trigger_axis: int = 2   # LT (axis) - Wrist rotate counter-clockwise

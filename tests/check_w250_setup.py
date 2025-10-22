@@ -86,7 +86,7 @@ def check_control_node():
             if wx250_nodes:
                 return True, f"Found node(s): {', '.join(wx250_nodes)}"
             else:
-                return False, "Node not found\n    Run: ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250"
+                return False, "Node not found\n    Run: ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250s"
         else:
             return False, "Could not list ROS2 nodes"
     except (subprocess.TimeoutExpired, FileNotFoundError):

@@ -82,7 +82,7 @@ def main():
     # Prompt user to start control node
     logger.info("=" * 70)
     logger.info("IMPORTANT: Before running tests, make sure the control node is running:")
-    logger.info("  $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250")
+    logger.info("  $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250s")
     logger.info("=" * 70)
     response = input("\nIs the control node running? (y/n): ")
 

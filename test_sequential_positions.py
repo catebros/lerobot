@@ -42,19 +42,19 @@ def test_sequential_positions():
     logger.info("  4. Move to CUSTOM position 2")
     logger.info("  5. Move back to HOME")
     logger.info("\nPrerequisites:")
-    logger.info("  1. W250 robot connected via USB")
+    logger.info("  1. WX250s (6DOF) robot connected via USB")
     logger.info("  2. ROS2 control node running:")
     logger.info("     $ ros2 launch interbotix_xsarm_control \\")
-    logger.info("       xsarm_control.launch.py robot_model:=wx250")
+    logger.info("       xsarm_control.launch.py robot_model:=wx250s")
     logger.info("=" * 60)
 
     input("\nPress ENTER when ready to start...")
 
     # Create robot configuration
     config = W250InterbotixConfig(
-        robot_model="wx250",
-        robot_name="wx250",
-        moving_time=2.0,
+        robot_model="wx250s",  # 6DOF version
+        robot_name="wx250s",
+        moving_time=1.5,  # Slower for smooth calibration
         accel_time=0.3,
     )
 
@@ -71,7 +71,7 @@ def test_sequential_positions():
         # Get initial position
         initial_obs = robot.get_observation()
         logger.info("\nInitial position:")
-        for joint in ["waist", "shoulder", "elbow", "wrist_angle", "wrist_rotate"]:
+        for joint in ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]:
             key = f"{joint}.pos"
             if key in initial_obs:
                 normalized = initial_obs[key]
@@ -117,6 +117,7 @@ def test_sequential_positions():
             "waist.pos": 0.5,          # Rotated left
             "shoulder.pos": -0.3,      # Slightly up
             "elbow.pos": 0.4,          # Bent
+            "forearm_roll.pos": 0.0,   # Forearm aligned
             "wrist_angle.pos": 0.0,    # Straight (no twist)  -> rotacion
             "wrist_rotate.pos": -0.2,  # Slightly down
             "gripper.pos": 0.0,        # Open
@@ -139,6 +140,7 @@ def test_sequential_positions():
             "waist.pos": -0.5,         # Rotated RIGHT (absolute, not relative!)
             "shoulder.pos": -0.3,      # Same as before
             "elbow.pos": 0.4,          # Same as before
+            "forearm_roll.pos": 0.0,   # Forearm aligned
             "wrist_angle.pos": 0.0,    # Straight (no twist)
             "wrist_rotate.pos": -0.2,  # Slightly down
             "gripper.pos": 1.0,        # Closed
@@ -168,7 +170,7 @@ def test_sequential_positions():
         # Show final position
         final_obs = robot.get_observation()
         logger.info("\nFinal position (should match HOME):")
-        for joint in ["waist", "shoulder", "elbow", "wrist_angle", "wrist_rotate"]:
+        for joint in ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]:
             key = f"{joint}.pos"
             if key in final_obs:
                 normalized = final_obs[key]

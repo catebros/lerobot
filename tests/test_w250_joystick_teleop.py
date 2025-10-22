@@ -149,7 +149,7 @@ def test_joystick_rviz():
     logger.info("     $ ros2 run joy joy_node")
     logger.info("  4. Terminal 2 - RViz WITHOUT joint_state_publisher:")
     logger.info("     $ ros2 launch interbotix_xsarm_descriptions \\")
-    logger.info("       xsarm_description.launch.py robot_model:=wx250 \\")
+    logger.info("       xsarm_description.launch.py robot_model:=wx250s \\")
     logger.info("       use_sim:=true use_rviz:=true")
     logger.info("\n⚠️  IMPORTANT: Do NOT use use_joint_pub:=true!")
     logger.info("   This script will publish the joint states instead.")

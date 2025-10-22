@@ -41,19 +41,19 @@ def test_home_rest_positions():
     logger.info("  - wrist_angle = 0.0 means STRAIGHT/ALIGNED (no twist)")
     logger.info("  - wrist_rotate = -0.3 means TILTED DOWN (for camera clearance)")
     logger.info("\nPrerequisites:")
-    logger.info("  1. W250 robot connected via USB")
+    logger.info("  1. WX250s (6DOF) robot connected via USB")
     logger.info("  2. ROS2 control node running:")
     logger.info("     $ ros2 launch interbotix_xsarm_control \\")
-    logger.info("       xsarm_control.launch.py robot_model:=wx250")
+    logger.info("       xsarm_control.launch.py robot_model:=wx250s")
     logger.info("=" * 60)
 
     input("\nPress ENTER when ready to start...")
 
     # Create robot configuration
     config = W250InterbotixConfig(
-        robot_model="wx250",
-        robot_name="wx250",
-        moving_time=2.0,
+        robot_model="wx250s",  # 6DOF version
+        robot_name="wx250s",
+        moving_time=1.5,  # Slower for smooth calibration
         accel_time=0.3,
     )
 
@@ -75,7 +75,7 @@ def test_home_rest_positions():
         # Get initial position (should be REST after calibration)
         initial_obs = robot.get_observation()
         logger.info("\nCurrent joint positions (should be REST after calibration):")
-        for joint in ["waist", "shoulder", "elbow", "wrist_angle", "wrist_rotate", "gripper"]:
+        for joint in ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate", "gripper"]:
             key = f"{joint}.pos"
             if key in initial_obs:
                 expected = W250_REST_POSITION.get(key, "N/A")
@@ -105,7 +105,7 @@ def test_home_rest_positions():
         # Verify position
         home_obs = robot.get_observation()
         logger.info("\n✓ Home position reached:")
-        for joint in ["waist", "shoulder", "elbow", "wrist_angle", "wrist_rotate", "gripper"]:
+        for joint in ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate", "gripper"]:
             key = f"{joint}.pos"
             if key in home_obs:
                 logger.info(f"  {joint:15s}: {home_obs[key]:+.3f}")
@@ -136,7 +136,7 @@ def test_home_rest_positions():
         # Verify position
         rest_obs = robot.get_observation()
         logger.info("\n✓ Rest position reached:")
-        for joint in ["waist", "shoulder", "elbow", "wrist_angle", "wrist_rotate", "gripper"]:
+        for joint in ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate", "gripper"]:
             key = f"{joint}.pos"
             if key in rest_obs:
                 logger.info(f"  {joint:15s}: {rest_obs[key]:+.3f}")

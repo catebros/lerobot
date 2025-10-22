@@ -167,8 +167,8 @@ def test_gripper_loop_diagnosis():
 
     # Create robot
     config = W250InterbotixConfig(
-        robot_model="wx250",
-        robot_name="wx250",
+        robot_model="wx250s",
+        robot_name="wx250s",
         moving_time=2.0,
         accel_time=0.3,
     )

@@ -70,10 +70,12 @@ class GamepadController(Node):
         self.intervention_flag = True  # Start with intervention enabled
 
         # Current joint positions (incremental control)
+        # WidowX 250 6DOF has 6 arm joints + gripper
         self.current_positions = {
             "waist.pos": 0.0,
             "shoulder.pos": 0.0,
             "elbow.pos": 0.0,
+            "forearm_roll.pos": 0.0,  # Joint 6 - Forearm rotation
             "wrist_angle.pos": 0.0,
             "wrist_rotate.pos": 0.0,
             "gripper.pos": 0.5,  # Start half-open
@@ -85,11 +87,12 @@ class GamepadController(Node):
         self.get_logger().info(
             f"W250 Logitech F710 Gamepad Controller initialized, listening to {config.joy_topic}"
         )
-        self.get_logger().info("=== Logitech F710 Gamepad Controls (5 DOF) ===")
+        self.get_logger().info("=== Logitech F710 Gamepad Controls (6 DOF) ===")
         self.get_logger().info("  Left Stick X:  Waist rotation (left/right)")
         self.get_logger().info("  Left Stick Y:  Shoulder (up/down)")
         self.get_logger().info("  Right Stick Y: Elbow (up/down)")
         self.get_logger().info("  Right Stick X: Wrist angle (left/right)")
+        self.get_logger().info("  D-Pad Left/Right: Forearm roll (Joint 6)")
         self.get_logger().info("  LT/RT (Triggers): Wrist rotate")
         self.get_logger().info("  LB: Open gripper")
         self.get_logger().info("  RB: Close gripper")
@@ -128,7 +131,7 @@ class GamepadController(Node):
             return max(-1.0, min(1.0, position))
 
     def get_joint_increments(self) -> Dict[str, float]:
-        """Calculate joint increments from Logitech F710 gamepad input."""
+        """Calculate joint increments from Logitech F710 gamepad input (6DOF)."""
         increments = {}
 
         axes = self.get_axes_values()
@@ -152,6 +155,16 @@ class GamepadController(Node):
         # Right Stick X -> Wrist angle
         right_stick_x = self._apply_deadzone(axes[self.config.right_stick_x_axis] if len(axes) > self.config.right_stick_x_axis else 0.0)
         increments["wrist_angle.pos"] = right_stick_x * self.config.wrist_step_size
+
+        # D-Pad controls - Forearm roll (Joint 6)
+        # D-Pad is typically represented as axis 6 (horizontal) and axis 7 (vertical)
+        forearm_roll_increment = 0.0
+        if len(axes) > self.config.dpad_x_axis:
+            dpad_x = axes[self.config.dpad_x_axis]
+            # D-Pad returns -1 for left, +1 for right, 0 for neutral
+            if abs(dpad_x) > 0.5:  # Simple threshold for D-Pad
+                forearm_roll_increment = dpad_x * self.config.forearm_step_size
+        increments["forearm_roll.pos"] = forearm_roll_increment
 
         # Triggers control - Wrist rotate (analog triggers on Logitech F710)
         # On Logitech F710, LT/RT are analog axes (range -1 to 1, rest at 0)
@@ -231,10 +244,11 @@ class W250JoystickTeleop(Teleoperator):
     Teleop class to use Logitech F710 gamepad inputs via ROS2 for control.
     Requires ROS2 joy node to be running with connected Logitech F710 gamepad.
 
-    Controls all 5 DOF of the W250 robot arm:
+    Controls all 6 DOF of the W250 robot arm (6DOF model):
     - Waist rotation (left stick X)
     - Shoulder (left stick Y)
     - Elbow (right stick Y)
+    - Forearm roll (D-Pad left/right) - Joint 6
     - Wrist angle (right stick X)
     - Wrist rotate (LT/RT triggers)
     Plus gripper control (LB/RB buttons)
@@ -259,11 +273,12 @@ class W250JoystickTeleop(Teleoperator):
 
     @property
     def action_features(self) -> dict:
-        """Define the structure of actions produced by this teleoperator."""
+        """Define the structure of actions produced by this teleoperator (6DOF)."""
         return {
             "waist.pos": float,
             "shoulder.pos": float,
             "elbow.pos": float,
+            "forearm_roll.pos": float,  # Joint 6 - Forearm rotation
             "wrist_angle.pos": float,
             "wrist_rotate.pos": float,
             "gripper.pos": float,

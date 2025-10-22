@@ -21,11 +21,13 @@ to ensure consistency.
 
 # Home position: All joints at neutral (0.0 normalized)
 # This is the standard calibration position
+# WidowX 250 6DOF configuration (7 joints + gripper)
 W250_HOME_POSITION = {
     "waist.pos": 0.0,
     "shoulder.pos": 0.0,
     "elbow.pos": 0.0,
-    "wrist_angle.pos": -0.6,
+    "forearm_roll.pos": 0.0,  # Forearm rotation (6DOF model)
+    "wrist_angle.pos": 0.0,
     "wrist_rotate.pos": 0.0,
     "gripper.pos": 0.0,  # Open
 }
@@ -36,15 +38,16 @@ W250_HOME_POSITION = {
 # - Safe storage/transport position
 # - Initial position before teleop
 #
-# IMPORTANT NOTES:
-# - wrist_angle controls the ROTATION/TWIST of the wrist (like turning a screwdriver)
-# - wrist_rotate controls the PITCH/TILT of the wrist (up/down angle)
-# - wrist_angle = 0.0 keeps the wrist STRAIGHT/ALIGNED (not rotated)
+# IMPORTANT NOTES (6DOF model):
+# - forearm_roll: ROTATION of the forearm (joint 6)
+# - wrist_angle: ROTATION/TWIST of the wrist
+# - wrist_rotate: PITCH/TILT of the wrist (up/down angle)
 W250_REST_POSITION = {
-    "waist.pos": 0.0,          # Centered
-    "shoulder.pos": -0.5,      # Lifted up
-    "elbow.pos": 0.6,          # Bent inward
-    "wrist_angle.pos": 0.3,    # STRAIGHT/ALIGNED (no rotation) - THIS IS THE TWIST
-    "wrist_rotate.pos": -0.3,  # Angled down (prevents camera/gripper collision) - THIS IS THE TILT
-    "gripper.pos": 1.0,        # Closed
+    "waist.pos": 0.0,
+    "shoulder.pos": -0.6, #
+    "elbow.pos": 0.4, #
+    "forearm_roll.pos": 0.0,
+    "wrist_angle.pos": 0.73, #
+    "wrist_rotate.pos": 0.0,
+    "gripper.pos": 1.0, #
 }
