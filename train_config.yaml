@@ -1,0 +1,17 @@
+dataset:
+  repo_id: myusername/my_widowx_dataset
+
+policy:
+  type: act
+  push_to_hub: false
+
+optimizer:
+  type: adam
+  lr: 1e-4
+
+batch_size: 4
+steps: 50000
+save_freq: 5000
+eval_freq: 5000
+
+output_dir: outputs/widowx_pick_place_act2

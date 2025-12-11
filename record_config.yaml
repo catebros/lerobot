@@ -57,7 +57,7 @@ dataset:
   single_task: "Pick and place cube"
   fps: 30
   video: true
-  episode_time_s: 60
+  episode_time_s: 300
   reset_time_s: 60
 
 # Display configuration
