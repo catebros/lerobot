@@ -19,10 +19,8 @@ services:
               capabilities: [gpu]
 
     volumes:
-      # Map HuggingFace cache (dataset will be downloaded from HuggingFace Hub automatically)
       - ./hf_cache:/workspace/hf_cache
 
-      # All checkpoints, logs, and final model will be saved here
       - ./outputs:/workspace/outputs
 
     # Set environment variables
@@ -31,7 +29,7 @@ services:
       - PYTHONUNBUFFERED=1
       - HF_HOME=/workspace/hf_cache
       - HUGGINGFACE_HUB_CACHE=/workspace/hf_cache
-      - HF_TOKEN=${HF_TOKEN}  # HuggingFace authentication token
+      - HF_TOKEN=${HF_TOKEN}  
 
     # Keep container running
     stdin_open: true
