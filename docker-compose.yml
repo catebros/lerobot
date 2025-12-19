@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  lerobot-training:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REPO_URL: https://github.com/catebros/lerobot 
+    image: lerobot-training:latest
+
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    volumes:
+      # Map HuggingFace cache (dataset will be downloaded from HuggingFace Hub automatically)
+      - ./hf_cache:/workspace/hf_cache
+
+      # All checkpoints, logs, and final model will be saved here
+      - ./outputs:/workspace/outputs
+
+    # Set environment variables
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTHONUNBUFFERED=1
+      - HF_HOME=/workspace/hf_cache
+      - HUGGINGFACE_HUB_CACHE=/workspace/hf_cache
+      - HF_TOKEN=${HF_TOKEN}  # HuggingFace authentication token
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+    # Command to run (override this when starting)
+    command: bash

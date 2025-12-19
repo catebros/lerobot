@@ -1,0 +1,55 @@
+dataset:
+  repo_id: catebros/my_widowx_dataset
+
+policy:
+  type: diffusion
+  push_to_hub: true  # Auto-upload best model to HuggingFace
+
+  n_obs_steps: 2          # Number of observation steps
+  horizon: 16             # Action prediction horizon
+  n_action_steps: 8       # Actions to execute per policy call
+
+  vision_backbone: resnet34  # Better than resnet18, more capacity
+  pretrained_backbone_weights: ResNet34_Weights.IMAGENET1K_V1  # ImageNet pretrained
+  crop_shape: [96, 96]    # Larger crop for better visual detail (was 84x84)
+  crop_is_random: true    # Data augmentation
+  use_group_norm: true    # Better for small batches
+  spatial_softmax_num_keypoints: 64 
+
+  # Diffusion model settings
+  noise_scheduler_type: DDPM  # Standard and reliable
+  num_train_timesteps: 100
+  num_inference_steps: 10
+  beta_schedule: squaredcos_cap_v2
+  prediction_type: epsilon  # Standard for diffusion
+
+  down_dims: [512, 1024, 2048]
+  kernel_size: 5
+  n_groups: 8
+  diffusion_step_embed_dim: 256  # Increased from 128 for better conditioning
+  use_film_scale_modulation: true  # Better conditioning mechanism
+
+optimizer:
+  type: adam
+  lr: 1e-4
+  betas: [0.95, 0.999]
+  eps: 1e-8
+  weight_decay: 1e-6
+
+scheduler:
+  type: cosine
+  warmup_steps: 1000  # Longer warmup for stability (was 500)
+
+batch_size: 16          # Larger batch = more stable gradients (requires ~16GB GPU)
+steps: 200000           # 2x training for better convergence (was 100k)
+save_freq: 5000         # Save more frequently to catch best checkpoint
+eval_freq: 2500         # Evaluate more often
+log_freq: 50            # More frequent logging for monitoring
+
+# Gradient clipping for stability
+grad_clip_norm: 10.0
+
+# Use mixed precision training for speed
+use_amp: true
+
+output_dir: /workspace/outputs/widowx_diffusion_best
