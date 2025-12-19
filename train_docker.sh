@@ -20,10 +20,7 @@ echo "Starting training..."
 echo ""
 
 # Run the training
-/opt/conda/bin/python -m lerobot.scripts.train \
-    --config-path=/workspace/lerobot/train_diffusion_config.yaml \
-    --output-dir=/workspace/outputs/widowx_diffusion_best \
-    --logging-dir=/workspace/outputs/widowx_diffusion_best/logs
+lerobot-train --config_path=/workspace/lerobot/train_diffusion_config.yaml
 
 echo ""
 echo "=========================================="
