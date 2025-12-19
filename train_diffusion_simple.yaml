@@ -1,0 +1,18 @@
+dataset:
+  repo_id: catebros/my_widowx_dataset
+
+policy:
+  type: diffusion
+  push_to_hub: true
+
+optimizer:
+  type: adam
+  lr: 1e-4
+
+batch_size: 16
+steps: 200000
+save_freq: 5000
+eval_freq: 5000
+
+output_dir: /workspace/outputs/widowx_diffusion_best
+device: cuda

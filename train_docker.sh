@@ -20,7 +20,7 @@ echo "Starting training..."
 echo ""
 
 # Run the training
-lerobot-train --config_path=/workspace/lerobot/train_diffusion_config.yaml
+lerobot-train --config_path=/workspace/lerobot/train_diffusion_simple.yaml
 
 echo ""
 echo "=========================================="
