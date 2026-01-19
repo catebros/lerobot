@@ -1,5 +1,6 @@
 dataset:
   repo_id: catebros/my_widowx_dataset
+  root: null  # Will use HuggingFace cache (mounted from host)
 
 policy:
   type: diffusion

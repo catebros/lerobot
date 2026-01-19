@@ -22,7 +22,7 @@ robot:
       width: 640
       height: 480
       color_mode: rgb
-      use_depth: false  # Set to true if you want depth data
+      use_depth: false  
     camera_2:
       type: intelrealsense
       serial_number_or_name: "220222065523"
@@ -30,7 +30,7 @@ robot:
       width: 640
       height: 480
       color_mode: rgb
-      use_depth: false  # Set to true if you want depth data
+      use_depth: false  
 
 # Teleoperator configuration (Logitech F710 gamepad)
 teleop:

@@ -9,7 +9,7 @@ services:
         REPO_URL: https://github.com/catebros/lerobot 
     image: lerobot-training:latest
 
-    # GPU support
+    # GPU
     deploy:
       resources:
         reservations:
@@ -19,9 +19,12 @@ services:
               capabilities: [gpu]
 
     volumes:
-      - ./hf_cache:/workspace/hf_cache
-
+      # Mount local HuggingFace cache -> with my dataset -> CHANGE THIS !!!!
+      # Mount outputs directory
+      # Mount your training config into the container
+      - /home/cbarbero/.cache/huggingface:/workspace/hf_cache
       - ./outputs:/workspace/outputs
+      - ./train_diffusion_config.yaml:/workspace/lerobot/train_diffusion_config.yaml
 
     # Set environment variables
     environment:
@@ -32,8 +35,6 @@ services:
       - HF_TOKEN=${HF_TOKEN}  
 
     # Keep container running
-    stdin_open: true
+    stdin_open: truew w
     tty: true
-
-    # Command to run (override this when starting)
     command: bash
