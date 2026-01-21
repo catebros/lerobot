@@ -72,6 +72,9 @@ from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # no
 from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
+# Import policy configs to register them before parsing (fixes policy loading)
+from lerobot.policies.diffusion.configuration_diffusion import DiffusionConfig  # noqa: F401
+from lerobot.policies.act.configuration_act import ACTConfig  # noqa: F401
 from lerobot.datasets.image_writer import safe_stop_image_writer
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.pipeline_features import aggregate_pipeline_dataset_features, create_initial_features
