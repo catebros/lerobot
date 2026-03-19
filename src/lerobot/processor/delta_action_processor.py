@@ -17,8 +17,8 @@
 from dataclasses import dataclass
 
 from lerobot.configs.types import FeatureType, PipelineFeatureType, PolicyFeature
+from lerobot.types import PolicyAction, RobotAction
 
-from .core import PolicyAction, RobotAction
 from .pipeline import ActionProcessorStep, ProcessorStepRegistry, RobotActionProcessorStep
 
 
@@ -83,14 +83,12 @@ class MapDeltaActionToRobotActionStep(RobotActionProcessorStep):
 
     Attributes:
         position_scale: A factor to scale the delta position inputs.
-        rotation_scale: A factor to scale the delta rotation inputs (currently unused).
         noise_threshold: The magnitude below which delta inputs are considered noise
                          and do not trigger an "enabled" state.
     """
 
     # Scale factors for delta movements
     position_scale: float = 1.0
-    rotation_scale: float = 0.0  # No rotation deltas for gamepad/keyboard
     noise_threshold: float = 1e-3  # 1 mm threshold to filter out noise
 
     def action(self, action: RobotAction) -> RobotAction:

@@ -20,11 +20,9 @@ import torch
 
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.train import TrainPipelineConfig
-from lerobot.datasets.lerobot_dataset import (
-    LeRobotDataset,
-    LeRobotDatasetMetadata,
-    MultiLeRobotDataset,
-)
+from lerobot.datasets.dataset_metadata import LeRobotDatasetMetadata
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.datasets.multi_dataset import MultiLeRobotDataset
 from lerobot.datasets.streaming_dataset import StreamingLeRobotDataset
 from lerobot.datasets.transforms import ImageTransforms
 from lerobot.utils.constants import ACTION, OBS_PREFIX, REWARD
@@ -98,7 +96,7 @@ def make_dataset(cfg: TrainPipelineConfig) -> LeRobotDataset | MultiLeRobotDatas
                 image_transforms=image_transforms,
                 revision=cfg.dataset.revision,
                 video_backend=cfg.dataset.video_backend,
-                tolerance_s=1e-3,  # Increase tolerance from default 1e-4 to handle timestamp sync issues
+                tolerance_s=cfg.tolerance_s,
             )
         else:
             dataset = StreamingLeRobotDataset(
@@ -109,6 +107,7 @@ def make_dataset(cfg: TrainPipelineConfig) -> LeRobotDataset | MultiLeRobotDatas
                 image_transforms=image_transforms,
                 revision=cfg.dataset.revision,
                 max_num_shards=cfg.num_workers,
+                tolerance_s=cfg.tolerance_s,
             )
     else:
         raise NotImplementedError("The MultiLeRobotDataset isn't supported for now.")

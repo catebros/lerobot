@@ -19,7 +19,7 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
 from lerobot.configs.train import TrainPipelineConfig
-from lerobot.datasets.utils import load_json, write_json
+from lerobot.datasets.io_utils import load_json, write_json
 from lerobot.optim.optimizers import load_optimizer_state, save_optimizer_state
 from lerobot.optim.schedulers import load_scheduler_state, save_scheduler_state
 from lerobot.policies.pretrained import PreTrainedPolicy
@@ -99,6 +99,10 @@ def save_checkpoint(
     pretrained_dir = checkpoint_dir / PRETRAINED_MODEL_DIR
     policy.save_pretrained(pretrained_dir)
     cfg.save_pretrained(pretrained_dir)
+    if cfg.peft is not None:
+        # When using PEFT, policy.save_pretrained will only write the adapter weights + config, not the
+        # policy config which we need for loading the model. In this case we'll write it ourselves.
+        policy.config.save_pretrained(pretrained_dir)
     if preprocessor is not None:
         preprocessor.save_pretrained(pretrained_dir)
     if postprocessor is not None:

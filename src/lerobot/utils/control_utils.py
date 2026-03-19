@@ -31,8 +31,10 @@ from deepdiff import DeepDiff
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import DEFAULT_FEATURES
 from lerobot.policies.pretrained import PreTrainedPolicy
-from lerobot.processor import PolicyAction, PolicyProcessorPipeline
+from lerobot.policies.utils import prepare_observation_for_inference
+from lerobot.processor import PolicyProcessorPipeline
 from lerobot.robots import Robot
+from lerobot.types import PolicyAction
 
 
 @cache
@@ -102,17 +104,7 @@ def predict_action(
         torch.autocast(device_type=device.type) if device.type == "cuda" and use_amp else nullcontext(),
     ):
         # Convert to pytorch format: channel first and float32 in [0,1] with batch dimension
-        for name in observation:
-            observation[name] = torch.from_numpy(observation[name])
-            if "image" in name:
-                observation[name] = observation[name].type(torch.float32) / 255
-                observation[name] = observation[name].permute(2, 0, 1).contiguous()
-            observation[name] = observation[name].unsqueeze(0)
-            observation[name] = observation[name].to(device)
-
-        observation["task"] = task if task else ""
-        observation["robot_type"] = robot_type if robot_type else ""
-
+        observation = prepare_observation_for_inference(observation, device, task, robot_type)
         observation = preprocessor(observation)
 
         # Compute the next action with the policy
@@ -120,12 +112,6 @@ def predict_action(
         action = policy.select_action(observation)
 
         action = postprocessor(action)
-
-        # Remove batch dimension
-        action = action.squeeze(0)
-
-        # Move to cpu, if not already the case
-        action = action.to("cpu")
 
     return action
 
@@ -204,7 +190,7 @@ def sanity_check_dataset_name(repo_id, policy_cfg):
     # Check if dataset_name starts with "eval_" but policy is missing
     if dataset_name.startswith("eval_") and policy_cfg is None:
         raise ValueError(
-            f"Your dataset name begins with 'eval_' ({dataset_name}), but no policy is provided ({policy_cfg.type})."
+            f"Your dataset name begins with 'eval_' ({dataset_name}), but no policy is provided."
         )
 
     # Check if dataset_name does not start with "eval_" but policy is provided
