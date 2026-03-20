@@ -55,7 +55,6 @@ class W250Interbotix(Robot):
         # State tracking
         self._is_connected = False
         self._current_positions: Dict[str, float] = {}
-        self._last_gripper_value: Optional[float] = None  # Last keyboard gripper position
         
         # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
         # WidowX 250 6DOF has 6 joints (waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate)
@@ -583,51 +582,57 @@ class W250Interbotix(Robot):
             #   negative effort → motor closes finger
             #   zero effort     → motor stops
             #
-            # We publish effort every control cycle based on the CHANGE in the keyboard
-            # gripper position:
-            #   delta > 0  →  G was pressed  → open effort
-            #   delta < 0  →  H was pressed  → close effort
-            #   delta = 0  →  no key         → stop (effort 0)
+            # delta = gripper_cmd - current_physical_norm
+            #   delta > 0  →  commanded target is MORE open than current  → open motor
+            #   delta < 0  →  commanded target is LESS open than current  → close motor
+            #   delta ≈ 0  →  at target                                   → stop motor
             #
-            # gripper_moving=True lets the safety timer (tmr_gripper_state, 50 Hz) auto-stop
-            # the motor when the finger reaches its hardware limits.
+            # Using physical position (not a running counter) means:
+            #   1. Teleop: counter clamped at [0,1]; delta vs physical stays nonzero
+            #      as long as gripper hasn't reached the target → no saturation.
+            #   2. Policy inference: policy predicts physical [0,1] target; delta vs
+            #      current physical gives the correct drive direction every step.
+            #
+            # gripper_moving=True lets the safety timer (tmr_gripper_state, 50 Hz)
+            # auto-stop the motor when the finger reaches its hardware limits.
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
-                delta = 0.0 if self._last_gripper_value is None else (gripper_cmd - self._last_gripper_value)
-                self._last_gripper_value = gripper_cmd
 
                 try:
                     max_effort = abs(self.bot.gripper.gripper_value)
                     finger_pos = self.bot.gripper.get_finger_position()
                     lower = self.bot.gripper.left_finger_lower_limit
                     upper = self.bot.gripper.left_finger_upper_limit
+                    finger_norm = (finger_pos - lower) / (upper - lower) if upper > lower else 0.5
+
+                    delta = gripper_cmd - finger_norm
 
                     if delta > 0.001 and finger_pos < upper:
-                        # Keyboard moved UP and not at upper limit → open motor
+                        # Target is more open than current and not at limit → open motor
                         self.bot.gripper.gripper_command.cmd = max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = True
-                        logger.info(f"Gripper OPEN  effort=+{max_effort:.0f}  finger={finger_pos:.4f}m  limit={upper:.4f}m  delta={delta:+.3f}")
+                        logger.debug(f"Gripper OPEN  effort=+{max_effort:.0f}  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
                     elif delta < -0.001 and finger_pos > lower:
-                        # Keyboard moved DOWN and not at lower limit → close motor
+                        # Target is more closed than current and not at limit → close motor
                         self.bot.gripper.gripper_command.cmd = -max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = True
-                        logger.info(f"Gripper CLOSE effort={-max_effort:.0f}  finger={finger_pos:.4f}m  limit={lower:.4f}m  delta={delta:+.3f}")
+                        logger.debug(f"Gripper CLOSE effort={-max_effort:.0f}  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
                     elif delta > 0.001 and finger_pos >= upper:
-                        # G pressed but already at upper limit
+                        # Already at upper limit
                         self.bot.gripper.gripper_command.cmd = 0.0
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = False
-                        logger.info(f"Gripper OPEN  blocked — already at upper_limit ({finger_pos:.4f} >= {upper:.4f})")
+                        logger.debug(f"Gripper OPEN  blocked — already at upper_limit ({finger_pos:.4f} >= {upper:.4f})")
                     elif delta < -0.001 and finger_pos <= lower:
-                        # H pressed but already at lower limit
+                        # Already at lower limit
                         self.bot.gripper.gripper_command.cmd = 0.0
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = False
-                        logger.info(f"Gripper CLOSE blocked — already at lower_limit ({finger_pos:.4f} <= {lower:.4f})")
+                        logger.debug(f"Gripper CLOSE blocked — already at lower_limit ({finger_pos:.4f} <= {lower:.4f})")
                     else:
-                        # No change → stop motor
+                        # At target → stop motor
                         self.bot.gripper.gripper_command.cmd = 0.0
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = False

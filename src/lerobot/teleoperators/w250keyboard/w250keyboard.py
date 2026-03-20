@@ -314,18 +314,18 @@ class W250KeyboardTeleop(Teleoperator):
                 sys.stdout.flush()
                 continue
 
-            # Gripper — each press shifts an unbounded counter by ±gripper_step_size.
-            # We deliberately do NOT clamp to [0, 1] here.  The delta between consecutive
-            # calls is what drives send_action(): delta>0 → open effort, delta<0 → close effort.
-            # If we clamp at 1.0, the counter saturates and delta becomes 0 after a few
-            # presses even though G is still being pressed — motor silently stops.
-            # Physical limits are enforced in send_action() via get_finger_position().
+            # Gripper — clamped to [0, 1] so the dataset records a physical target position.
+            # Saturation (motor stopping after a few presses) is no longer a problem because
+            # send_action() computes delta = gripper_cmd - current_physical_position, not
+            # delta = gripper_cmd - last_counter. Even when the counter is clamped at 1.0,
+            # the delta vs physical position stays positive as long as the gripper isn't
+            # fully open yet → motor keeps driving.
             if ch == _GRIPPER_OPEN_KEY:
-                self._positions["gripper.pos"] += self.config.gripper_step_size
+                self._positions["gripper.pos"] = min(1.0, self._positions["gripper.pos"] + self.config.gripper_step_size)
                 continue
 
             if ch == _GRIPPER_CLOSE_KEY:
-                self._positions["gripper.pos"] -= self.config.gripper_step_size
+                self._positions["gripper.pos"] = max(0.0, self._positions["gripper.pos"] - self.config.gripper_step_size)
                 continue
 
             # Arm joint keys — mark as held while pressed

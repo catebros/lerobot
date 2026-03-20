@@ -16,7 +16,6 @@
 
 import logging
 import threading
-import time
 from enum import IntEnum
 from typing import Any, Dict
 
@@ -71,6 +70,9 @@ class GamepadController(Node):
 
         # Current joint positions (incremental control)
         # WidowX 250 6DOF has 6 arm joints + gripper
+        # gripper.pos is clamped to [0, 1] (physical target position).
+        # Saturation is avoided because send_action() computes delta vs the
+        # current physical position, not vs the last commanded value.
         self.current_positions = {
             "waist.pos": 0.0,
             "shoulder.pos": 0.0,
@@ -80,6 +82,9 @@ class GamepadController(Node):
             "wrist_rotate.pos": 0.0,
             "gripper.pos": 0.5,  # Start half-open
         }
+
+        # Previous button states for edge detection (debounce without sleep)
+        self._prev_buttons: list = []
 
         # Subscribe to joy topic
         self.subscription = self.create_subscription(Joy, config.joy_topic, self.joy_callback, 10)
@@ -126,7 +131,7 @@ class GamepadController(Node):
     def _clamp_position(self, joint_name: str, position: float) -> float:
         """Clamp joint position to valid range."""
         if joint_name == "gripper":
-            return max(0.0, min(1.0, position))
+            return max(0.0, min(1.0, position))  # [0,1] physical target for policy compatibility
         else:
             return max(-1.0, min(1.0, position))
 
@@ -220,23 +225,35 @@ class GamepadController(Node):
                 self.current_positions[joint_key] = robot_positions[joint_key]
                 self.get_logger().info(f"Synced {joint_key}: {robot_positions[joint_key]:.3f}")
 
+    def _button_rising_edge(self, idx: int) -> bool:
+        """Return True only on the rising edge (just pressed) for button idx."""
+        with self.lock:
+            buttons = self.buttons.copy() if self.buttons else []
+        curr = bool(buttons[idx]) if idx < len(buttons) else False
+        prev = bool(self._prev_buttons[idx]) if idx < len(self._prev_buttons) else False
+        return curr and not prev
+
     def update_state(self):
         """Update episode control state based on button presses."""
-        # Check intervention button (Select button) - toggle on press
-        if self.get_button_state(self.config.button_select):
-            self.intervention_flag = not self.intervention_flag
-            time.sleep(0.2)  # Debounce
+        with self.lock:
+            buttons = self.buttons.copy() if self.buttons else []
 
-        # Check home button (Triangle button)
-        if self.get_button_state(self.config.button_triangle):
+        # Check intervention button (Select) - toggle only on rising edge
+        if self._button_rising_edge(self.config.button_select):
+            self.intervention_flag = not self.intervention_flag
+
+        # Check home button (Triangle/Y) - only on rising edge
+        if self._button_rising_edge(self.config.button_triangle):
             self.reset_to_home()
-            time.sleep(0.2)  # Debounce
 
         # Check episode end buttons
         if self.get_button_state(self.config.button_start):
             self.episode_end_status = TeleopEvents.RERECORD_EPISODE
         else:
             self.episode_end_status = None
+
+        # Snapshot current buttons for next call's edge detection
+        self._prev_buttons = buttons
 
 
 class W250JoystickTeleop(Teleoperator):
@@ -400,6 +417,7 @@ class W250JoystickTeleop(Teleoperator):
 
         logging.info("W250 Logitech F710 gamepad teleoperator disconnected")
 
+    @property
     def is_connected(self) -> bool:
         """Check if gamepad controller is connected."""
         return self.gamepad_node is not None
@@ -409,9 +427,9 @@ class W250JoystickTeleop(Teleoperator):
         # No calibration needed for gamepad with ROS2
         pass
 
+    @property
     def is_calibrated(self) -> bool:
         """Check if gamepad controller is calibrated."""
-        # Gamepad doesn't require calibration with ROS2
         return True
 
     def configure(self) -> None:
