@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import math
 import time
 import threading
 from functools import cached_property
@@ -34,28 +35,11 @@ from .constants import W250_REST_POSITION
 
 logger = logging.getLogger(__name__)
 
+# This is basically: LeRobot (framework IA)  <-->  W250Interbotix  <-->  ROS2 / Interbotix API  <-->  Robot físico
 
 class W250Interbotix(Robot):
     """
     WidowX-250 robot using official Interbotix Python API with ROS2
-
-    This implementation provides the same LeRobot interface while using
-    the official Interbotix API underneath for maximum compatibility and reliability.
-
-    Maintains the same method signatures as the original W250 class for
-    seamless integration with existing LeRobot workflows.
-
-    GRIPPER CONTROL FIX:
-    The Interbotix API has a timer callback (tmr_gripper_state) that runs at 50Hz
-    and continuously publishes gripper commands, causing infinite open/close loops.
-
-    Our solution:
-    1. Disable the timer callback immediately after connection (line ~203)
-    2. Publish gripper effort commands directly without triggering the timer
-    3. Use a background thread to send effort=0 after 0.5s to stop movement
-    4. Clean disconnect that cancels timer and stops all gripper commands
-
-    This ensures the gripper moves smoothly without loops.
     """
 
     config_class = W250InterbotixConfig
@@ -71,8 +55,7 @@ class W250Interbotix(Robot):
         # State tracking
         self._is_connected = False
         self._current_positions: Dict[str, float] = {}
-        self._last_gripper_value: Optional[float] = None  # Track last gripper value to avoid loops
-        self._gripper_threshold: float = 0.1  # Threshold for detecting gripper state change
+        self._last_gripper_value: Optional[float] = None  # Last keyboard gripper position
         
         # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
         # WidowX 250 6DOF has 6 joints (waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate)
@@ -89,13 +72,14 @@ class W250Interbotix(Robot):
         # Joint limits from spec: Waist ±180°, Shoulder -108 to 114°, Elbow -123 to 92°,
         # Forearm Roll ±180°, Wrist Angle -100 to 123°, Wrist Rotate ±180°
         self._joint_limits = {
-            "waist": (-np.pi, np.pi),  # ±180°
+            "waist": (-np.pi, np.pi),  # +-180°
             "shoulder": (-1.88, 1.99),  # -108° to 114° (approx -1.88 to 1.99 rad)
             "elbow": (-2.15, 1.60),  # -123° to 92° (approx -2.15 to 1.60 rad)
-            "forearm_roll": (-np.pi, np.pi),  # ±180° (Joint 6)
+            "forearm_roll": (-np.pi, np.pi),  # +-180° (Joint 6)
             "wrist_angle": (-1.745, 2.15),  # -100° to 123° (approx -1.745 to 2.15 rad)
-            "wrist_rotate": (-np.pi, np.pi)  # ±180°
-        }
+            "wrist_rotate": (-np.pi, np.pi)  # +-180°
+        } # THIS IS A FALLBACK - we will update these limits from the robot info during connection
+        # TODO: potential test, are we using this fallabck? or are we successfully updating from robot info?
         
         # Initialize cameras
         self.cameras = make_cameras_from_configs(config.cameras)
@@ -137,7 +121,6 @@ class W250Interbotix(Robot):
     def _verify_ros2_setup(self) -> None:
         """
         Verify ROS2 environment is properly configured
-
         Checks for common ROS2 setup issues before attempting to connect.
         """
         import os
@@ -155,7 +138,7 @@ class W250Interbotix(Robot):
         if 'INTERBOTIX_WS' in os.environ:
             logger.debug(f"Interbotix workspace: {os.environ['INTERBOTIX_WS']}")
 
-        # Verify control node is running (optional check)
+        # Verify control node is running
         try:
             result = subprocess.run(
                 ['ros2', 'node', 'list'],
@@ -215,11 +198,16 @@ class W250Interbotix(Robot):
             # Update joint limits from robot info
             self._update_joint_limits()
 
-            # CRITICAL FIX: Disable the gripper state timer callback that causes infinite loops
-            # This timer callback runs at 50Hz and continuously publishes gripper commands
-            if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'tmr_gripper_state'):
-                self.bot.gripper.tmr_gripper_state.cancel()
-                logger.info("Gripper state timer DISABLED to prevent loops")
+            # Set gripper to PWM mode so xs_sdk_sim interprets ±effort as incremental rotation.
+            # In xs_sdk_sim, 'position' mode (the default) treats the cmd value as a target angle
+            # in radians — so our ±250 PWM effort would be misread as a 250-rad position target,
+            # giving garbage left_finger values and making G/H behave identically.
+            # Setting 'pwm' mode first ensures: angle += effort/2000 per sim tick (correct).
+            self._set_gripper_pwm_mode()
+
+            # Keep tmr_gripper_state ENABLED — it is the hardware safety mechanism that
+            # auto-stops the gripper when the finger reaches its physical limits.
+            # It only acts when gripper_moving=True, which we control explicitly in send_action.
 
             # Read initial positions
             self._update_positions()
@@ -256,6 +244,45 @@ class W250Interbotix(Robot):
         except Exception as e:
             logger.warning(f"Could not update joint limits: {e}")
 
+    def _set_gripper_pwm_mode(self) -> None:
+        """
+        Force the gripper into PWM operating mode.
+
+        xs_sdk_sim defaults the gripper to 'position' mode (from modes.yaml).
+        In position mode, the JointSingleCommand.cmd value is treated as a target
+        angle in radians — so sending ±250 (PWM effort) is misread as ±250 rad,
+        producing garbage left_finger positions and making open/close identical.
+
+        In 'pwm' mode xs_sdk_sim does: angle += cmd/2000.0 each sim tick, which
+        is the correct incremental behaviour for PWM control.
+
+        This is safe to call on real hardware too: 'pwm' mode is how the
+        Interbotix gripper driver normally expects to be used.
+        """
+        if not self.bot:
+            return
+        try:
+            core = self.bot.gripper.core
+            if hasattr(core, 'robot_set_operating_modes'):
+                core.robot_set_operating_modes("single", "gripper", "pwm")
+                logger.info("Gripper operating mode set to PWM")
+            else:
+                # Fallback: call service directly via srv_set_operating_modes
+                from interbotix_xs_msgs.srv import OperatingModes
+                req = OperatingModes.Request()
+                req.cmd_type = "single"
+                req.name = "gripper"
+                req.mode = "pwm"
+                req.profile_type = "velocity"
+                req.profile_velocity = 0
+                req.profile_acceleration = 0
+                future = core.srv_set_operating_modes.call_async(req)
+                import rclpy
+                rclpy.spin_until_future_complete(core.node, future, timeout_sec=2.0)
+                logger.info("Gripper operating mode set to PWM (via async service)")
+        except Exception as e:
+            logger.warning(f"Could not set gripper to PWM mode: {e}")
+
     def _normalize_position(self, joint_name: str, position: float) -> float:
         """Convert joint position from radians to normalized [-1, 1] range"""
         lower, upper = self._joint_limits.get(joint_name, (-1.0, 1.0))
@@ -277,8 +304,8 @@ class W250Interbotix(Robot):
             return
             
         try:
-            # Get joint positions
-            joint_positions = self.bot.arm.get_joint_commands()
+            # Get actual joint positions from joint state feedback (not commanded positions)
+            joint_positions = self.bot.arm.get_joint_positions()
             
             with self._state_lock:
                 # Update arm joints
@@ -288,15 +315,14 @@ class W250Interbotix(Robot):
                         self._current_positions[f"{joint_name}.pos"] = normalized_pos
                 
                 # Get gripper position (0=closed, 1=open for LeRobot compatibility)
-                # Use get_gripper_position() method from ROS2 API
+                # Use get_finger_position() — returns left_finger joint in METERS (linear)
+                # Limits come directly from gripper_info to avoid hardcoded values
                 try:
-                    if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'get_gripper_position'):
-                        # Get current gripper position in radians
-                        raw_gripper_pos = self.bot.gripper.get_gripper_position()
-                        # Normalize to [0, 1] range (0=closed, 1=open)
-                        # Interbotix gripper typically ranges from ~0.015 (closed) to ~0.037 (open) radians
-                        gripper_min, gripper_max = 0.015, 0.037
-                        gripper_pos = (raw_gripper_pos - gripper_min) / (gripper_max - gripper_min)
+                    if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'get_finger_position'):
+                        finger_pos = self.bot.gripper.get_finger_position()  # meters
+                        gripper_min = self.bot.gripper.left_finger_lower_limit
+                        gripper_max = self.bot.gripper.left_finger_upper_limit
+                        gripper_pos = (finger_pos - gripper_min) / (gripper_max - gripper_min)
                         gripper_pos = max(0.0, min(1.0, gripper_pos))  # Clamp to [0, 1]
                     else:
                         gripper_pos = 0.0
@@ -323,10 +349,7 @@ class W250Interbotix(Robot):
         1. Move to HOME position briefly (all joints at 0)
         2. Move to REST position (safe, ready-to-record position)
 
-        IMPORTANT JOINT CLARIFICATION (6DOF model):
-        - forearm_roll: Controls ROLL/ROTATION of the forearm (Joint 6)
-        - wrist_angle: Controls ROTATION/TWIST (like turning a screwdriver)
-        - wrist_rotate: Controls PITCH/TILT (up/down angle)
+        IMPORTANT: This method handles the initialization, no real calibration
         """
         if not self.bot:
             logger.error("Robot not connected, cannot calibrate")
@@ -334,13 +357,19 @@ class W250Interbotix(Robot):
 
         logger.info("Calibrating robot...")
 
-        try:
-            # Step 1: Move to HOME position (all joints at 0, fully aligned)
-            # [waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate] = [0, 0, 0, 0, 0, 0]
-            home_position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        # Calibration moves are large (full range from HOME → REST), so we need
+        # enough moving_time to stay under the π rad/s velocity limit.
+        # Worst case: wrist_angle REST ≈ 1.62 rad from HOME → needs ≥ 0.52 s.
+        # We use 2.0 s to be safe, then restore the configured moving_time after.
+        CALIB_MOVING_TIME = 2.0
+        CALIB_ACCEL_TIME  = 0.5
 
+        try:
+            self.bot.arm.set_trajectory_time(CALIB_MOVING_TIME, CALIB_ACCEL_TIME)
+
+            # Step 1: Move to HOME position (all joints at 0) using built-in API method
             logger.info("Step 1/2: Moving to HOME position (all joints at 0, wrist aligned)")
-            self.bot.arm.set_joint_positions(home_position, blocking=True)
+            self.bot.arm.go_to_home_pose(blocking=True)
             time.sleep(0.5)  # Brief pause at home position
 
             # Step 2: Move to REST position (safe, ready-to-record)
@@ -369,29 +398,43 @@ class W250Interbotix(Robot):
                        f"wrist_angle={rest_positions[4]:.3f}, "
                        f"wrist_rotate={rest_positions[5]:.3f}")
 
-            self.bot.arm.set_joint_positions(rest_positions, blocking=True)
+            if not self.bot.arm.set_joint_positions(rest_positions, blocking=True):
+                logger.warning("REST position rejected by Interbotix — positions may be outside joint limits")
 
-            # Handle gripper - move to closed position (REST position gripper state)
-            if hasattr(self.bot, 'gripper') and W250_REST_POSITION["gripper.pos"] > 0.5:
+            # Restore normal trajectory timing for teleop
+            self.bot.arm.set_trajectory_time(self.config.moving_time, self.config.accel_time)
+            logger.debug(f"Restored trajectory time: moving={self.config.moving_time}s accel={self.config.accel_time}s")
+
+            # Handle gripper - move to open/closed position based on REST position state
+            # Use release()/grasp() from the Interbotix API, NOT raw effort+sleep.
+            # release()/grasp() call gripper_controller() which:
+            #   1. Checks left_finger position against URDF limits before sending
+            #   2. Sets gripper_moving=True so the 50Hz tmr_gripper_state timer auto-stops
+            #      the motor the moment the finger reaches its limit (prevents angle runaway in sim)
+            if hasattr(self.bot, 'gripper'):
                 try:
-                    # Close gripper as per REST position
-                    effort = -self.bot.gripper.gripper_value  # Negative to close
-                    self.bot.gripper.gripper_command.cmd = effort
-                    self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
-                    time.sleep(1.0)  # Wait for gripper to close
-                    # Stop gripper
-                    self.bot.gripper.gripper_command.cmd = 0.0
-                    self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
-                    logger.info("  Gripper closed")
+                    if W250_REST_POSITION["gripper.pos"] > 0.5:
+                        logger.info("  Opening gripper (release)...")
+                        self.bot.gripper.release(delay=2.0)  # timer auto-stops at upper_limit
+                        logger.info("  Gripper opened")
+                    else:
+                        logger.info("  Closing gripper (grasp)...")
+                        self.bot.gripper.grasp(delay=2.0)  # timer auto-stops at lower_limit
+                        logger.info("  Gripper closed")
                 except Exception as e:
-                    logger.warning(f"Could not close gripper: {e}")
+                    logger.warning(f"Could not command gripper during calibration: {e}")
 
             # Update positions after calibration
             self._update_positions()
 
-            logger.info("✓ Calibration completed - Robot at REST position (ready to record)")
+            logger.info("Calibration completed - Robot at REST position (ready to record)")
 
         except Exception as e:
+            # Always restore trajectory time even if calibration fails partway through
+            try:
+                self.bot.arm.set_trajectory_time(self.config.moving_time, self.config.accel_time)
+            except Exception:
+                pass
             logger.error(f"Calibration failed: {e}")
             raise
 
@@ -423,9 +466,10 @@ class W250Interbotix(Robot):
             
             # Configure movement timing
             moving_time = getattr(self.config, 'moving_time', 2.0)
+            accel_time = getattr(self.config, 'accel_time', 0.3)
             if hasattr(self.bot.arm, 'set_trajectory_time'):
-                self.bot.arm.set_trajectory_time(moving_time)
-                logger.debug(f"Set trajectory time to {moving_time}s")
+                self.bot.arm.set_trajectory_time(moving_time, accel_time)
+                logger.debug(f"Set trajectory time to {moving_time}s (accel={accel_time}s)")
             
             logger.info("Robot configuration completed successfully")
             
@@ -493,67 +537,102 @@ class W250Interbotix(Robot):
 
         try:
             # Send arm joint commands
+            # Fetch current positions once before the loop (avoid repeated ROS2 service calls)
+            current_joints = self.bot.arm.get_joint_positions()
             arm_positions = []
-            for joint_name in self._joint_names:
+            for idx, joint_name in enumerate(self._joint_names):
                 if joint_name in goal_pos:
                     # Convert normalized position to radians
                     joint_rad = self._denormalize_position(joint_name, goal_pos[joint_name])
                     arm_positions.append(joint_rad)
                 else:
                     # Keep current position if not specified
-                    current_joints = self.bot.arm.get_joint_commands()
-                    idx = self._joint_names.index(joint_name)
                     arm_positions.append(current_joints[idx] if idx < len(current_joints) else 0.0)
             
             # Send joint position command (non-blocking for real-time control)
-            self.bot.arm.set_joint_positions(arm_positions, blocking=False)
+            # set_joint_positions returns False if any position is outside URDF limits OR
+            # if the required speed (|goal-commanded| / moving_time) exceeds joint velocity limits.
+            #
+            # Velocity rejection happens when the keyboard jumps far (R key, 0 key, or key repeat
+            # burst). In that case, clamp each joint to the maximum achievable delta this cycle
+            # (velocity_limit × moving_time) so the robot always makes progress toward the target.
+            if not self.bot.arm.set_joint_positions(arm_positions, blocking=False):
+                try:
+                    moving_time = self.bot.arm.moving_time
+                    vel_limits = self.bot.arm.group_info.joint_velocity_limits
+                    last_cmd = list(self.bot.arm.joint_commands)
+                    clamped = []
+                    for goal, curr, vl in zip(arm_positions, last_cmd, vel_limits):
+                        max_step = vl * moving_time * 0.95  # 5% margin under limit
+                        delta = goal - curr
+                        if abs(delta) > max_step:
+                            clamped.append(curr + math.copysign(max_step, delta))
+                        else:
+                            clamped.append(goal)
+                    if not self.bot.arm.set_joint_positions(clamped, blocking=False):
+                        logger.debug(f"Clamped positions also rejected (position limit): {clamped}")
+                    else:
+                        logger.debug(f"Velocity-clamped arm positions toward target")
+                except Exception as e:
+                    logger.warning(f"set_joint_positions rejected and clamping failed: {e}")
             
-            # Handle gripper command using gripper_controller with effort control
-            # This uses the low-level PWM controller to avoid the grasp()/release() loops
+            # Gripper effort control — direction-based, fire-and-forget per cycle
+            #
+            # The Interbotix gripper is PWM/current-controlled:
+            #   positive effort → motor opens finger
+            #   negative effort → motor closes finger
+            #   zero effort     → motor stops
+            #
+            # We publish effort every control cycle based on the CHANGE in the keyboard
+            # gripper position:
+            #   delta > 0  →  G was pressed  → open effort
+            #   delta < 0  →  H was pressed  → close effort
+            #   delta = 0  →  no key         → stop (effort 0)
+            #
+            # gripper_moving=True lets the safety timer (tmr_gripper_state, 50 Hz) auto-stop
+            # the motor when the finger reaches its hardware limits.
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
+                delta = 0.0 if self._last_gripper_value is None else (gripper_cmd - self._last_gripper_value)
+                self._last_gripper_value = gripper_cmd
 
-                # Check if gripper command has changed significantly
-                command_changed = (
-                    self._last_gripper_value is None or
-                    abs(gripper_cmd - self._last_gripper_value) > self._gripper_threshold
-                )
+                try:
+                    max_effort = abs(self.bot.gripper.gripper_value)
+                    finger_pos = self.bot.gripper.get_finger_position()
+                    lower = self.bot.gripper.left_finger_lower_limit
+                    upper = self.bot.gripper.left_finger_upper_limit
 
-                if command_changed:
-                    try:
-                        # CRITICAL FIX: Use a simple approach - send effort command and let it run
-                        # Since we disabled the timer callback, we need to manage stopping manually
-
-                        # Calculate effort (positive=open, negative=close)
-                        if gripper_cmd > 0.5:  # Open gripper
-                            effort = self.bot.gripper.gripper_value
-                            logger.info(f"Gripper: opening (effort=+{effort:.1f}) - cmd={gripper_cmd:.3f}")
-                        else:  # Close gripper
-                            effort = -self.bot.gripper.gripper_value
-                            logger.info(f"Gripper: closing (effort={effort:.1f}) - cmd={gripper_cmd:.3f}")
-
-                        # Publish the effort command
-                        self.bot.gripper.gripper_command.cmd = effort
+                    if delta > 0.001 and finger_pos < upper:
+                        # Keyboard moved UP and not at upper limit → open motor
+                        self.bot.gripper.gripper_command.cmd = max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
-                        logger.debug(f"Published gripper effort={effort:.1f}")
-
-                        # Schedule a stop command after movement completes
-                        # We'll use a thread to send stop after delay
-                        import threading
-                        def stop_gripper():
-                            time.sleep(0.5)  # Wait for gripper to move
-                            self.bot.gripper.gripper_command.cmd = 0.0
-                            self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
-                            logger.debug("Gripper stopped (effort=0)")
-
-                        threading.Thread(target=stop_gripper, daemon=True).start()
-
-                        self._last_gripper_value = gripper_cmd
-                    except Exception as e:
-                        logger.warning(f"Failed to command gripper: {e}")
-                        # Fallback: Don't send any gripper command if it fails
-                else:
-                    logger.debug(f"Gripper: no change (current={self._last_gripper_value:.3f}, new={gripper_cmd:.3f})")
+                        self.bot.gripper.gripper_moving = True
+                        logger.info(f"Gripper OPEN  effort=+{max_effort:.0f}  finger={finger_pos:.4f}m  limit={upper:.4f}m  delta={delta:+.3f}")
+                    elif delta < -0.001 and finger_pos > lower:
+                        # Keyboard moved DOWN and not at lower limit → close motor
+                        self.bot.gripper.gripper_command.cmd = -max_effort
+                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                        self.bot.gripper.gripper_moving = True
+                        logger.info(f"Gripper CLOSE effort={-max_effort:.0f}  finger={finger_pos:.4f}m  limit={lower:.4f}m  delta={delta:+.3f}")
+                    elif delta > 0.001 and finger_pos >= upper:
+                        # G pressed but already at upper limit
+                        self.bot.gripper.gripper_command.cmd = 0.0
+                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                        self.bot.gripper.gripper_moving = False
+                        logger.info(f"Gripper OPEN  blocked — already at upper_limit ({finger_pos:.4f} >= {upper:.4f})")
+                    elif delta < -0.001 and finger_pos <= lower:
+                        # H pressed but already at lower limit
+                        self.bot.gripper.gripper_command.cmd = 0.0
+                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                        self.bot.gripper.gripper_moving = False
+                        logger.info(f"Gripper CLOSE blocked — already at lower_limit ({finger_pos:.4f} <= {lower:.4f})")
+                    else:
+                        # No change → stop motor
+                        self.bot.gripper.gripper_command.cmd = 0.0
+                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
+                        self.bot.gripper.gripper_moving = False
+                except Exception as e:
+                    logger.warning(f"Failed to command gripper: {e}")
             
             logger.debug(f"Sent action to robot: {goal_pos}")
             
@@ -566,24 +645,18 @@ class W250Interbotix(Robot):
 
     def disconnect(self) -> None:
         """Disconnect from robot and cameras"""
-        if not self.is_connected:
+        if not self._is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
         logger.info(f"Disconnecting {self}...")
 
-        # CRITICAL: Stop gripper FIRST before any other operations
-        # This prevents the gripper from entering a loop during shutdown
+        # Stop gripper before disconnect
         if self.bot and hasattr(self.bot, 'gripper'):
             try:
-                # Stop the gripper state timer callback that runs at 50Hz
-                if hasattr(self.bot.gripper, 'tmr_gripper_state'):
-                    self.bot.gripper.tmr_gripper_state.cancel()
-                    logger.info("Gripper state timer cancelled")
-
                 # Stop any ongoing gripper movement
                 self.bot.gripper.gripper_moving = False
 
-                # Send zero effort command to stop gripper
+                # Send zero effort command to stop gripper motor
                 self.bot.gripper.gripper_command.cmd = 0.0
                 self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                 logger.info("Gripper stopped (effort=0)")

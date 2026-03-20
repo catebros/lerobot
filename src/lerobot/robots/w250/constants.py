@@ -21,7 +21,7 @@ to ensure consistency.
 
 # Home position: All joints at neutral (0.0 normalized)
 # This is the standard calibration position
-# WidowX 250 6DOF configuration (7 joints + gripper)
+# WidowX 250 6DOF configuration (6 joints + gripper)
 W250_HOME_POSITION = {
     "waist.pos": 0.0,
     "shoulder.pos": 0.0,
