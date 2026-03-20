@@ -88,17 +88,11 @@ class W250KeyboardTeleop(Teleoperator):
         self._is_connected = False
         self._quit_requested = False
 
-        # Current absolute positions (normalized)
-        # Arm joints: [-1, 1], gripper: [0, 1]
-        self._positions: dict[str, float] = {
-            "waist.pos":        0.0,
-            "shoulder.pos":     0.0,
-            "elbow.pos":        0.0,
-            "forearm_roll.pos": 0.0,
-            "wrist_angle.pos":  0.0,
-            "wrist_rotate.pos": 0.0,
-            "gripper.pos":      0.5,
-        }
+        # Current absolute positions (normalized).
+        # Initialized to REST position so the first action after robot.connect()
+        # (which calibrates to REST) produces zero delta — no lurch on start.
+        # Call sync_with_robot() to update if the robot is somewhere else.
+        self._positions: dict[str, float] = dict(W250_REST_POSITION)
 
         # Keys currently held down
         self._held_keys: set[str] = set()

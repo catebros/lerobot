@@ -222,6 +222,10 @@ class W250Interbotix(Robot):
                 self.calibrate()
             
             logger.info(f"{self} connected successfully")
+            logger.info(
+                f"IMPORTANT: run lerobot_record with --dataset.fps={self.config.fps} "
+                f"to match robot fps (moving_time={self.config.moving_time:.4f}s)"
+            )
             
         except Exception as e:
             logger.error(f"Failed to connect to {self}: {e}")

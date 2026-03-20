@@ -68,20 +68,11 @@ class GamepadController(Node):
         self.episode_end_status = None
         self.intervention_flag = True  # Start with intervention enabled
 
-        # Current joint positions (incremental control)
-        # WidowX 250 6DOF has 6 arm joints + gripper
-        # gripper.pos is clamped to [0, 1] (physical target position).
-        # Saturation is avoided because send_action() computes delta vs the
-        # current physical position, not vs the last commanded value.
-        self.current_positions = {
-            "waist.pos": 0.0,
-            "shoulder.pos": 0.0,
-            "elbow.pos": 0.0,
-            "forearm_roll.pos": 0.0,  # Joint 6 - Forearm rotation
-            "wrist_angle.pos": 0.0,
-            "wrist_rotate.pos": 0.0,
-            "gripper.pos": 0.5,  # Start half-open
-        }
+        # Current joint positions (incremental control).
+        # Initialized to REST position so the first action after robot.connect()
+        # (which calibrates to REST) produces zero delta — no lurch on start.
+        # Call sync_with_robot() to update if the robot is somewhere else.
+        self.current_positions = dict(W250_REST_POSITION)
 
         # Previous button states for edge detection (debounce without sleep)
         self._prev_buttons: list = []

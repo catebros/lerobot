@@ -73,11 +73,16 @@ from lerobot.teleoperators.w250keyboard import W250KeyboardConfig, W250KeyboardT
 
 ROBOT_MODEL = "wx250s"       # Interbotix model name (wx250, wx250s, etc.)
 ROBOT_NAME  = "wx250s"       # ROS2 namespace
-MOVING_TIME = 0.8            # seconds per move — must satisfy: max_joint_delta / MOVING_TIME < π rad/s
-ACCEL_TIME  = 0.2            # acceleration time (≈ MOVING_TIME / 4)
 
-CONTROL_HZ = 10.0            # control loop frequency (Hz)
+# Frequency — single value, all timing derived from it.
+# Must match: dataset fps, camera fps, W250InterbotixConfig.fps.
+FPS         = 12             # Hz — change only this line
 DISPLAY_HZ  = 5.0            # how often to print state to terminal (Hz)
+
+# Derived — do not change directly
+CONTROL_HZ  = float(FPS)
+MOVING_TIME = 1.0 / FPS      # robot trajectory time = one control loop period
+ACCEL_TIME  = MOVING_TIME / 4
 
 # Set True if you want the robot to start by moving to HOME then REST
 CALIBRATE_ON_CONNECT = True
@@ -171,15 +176,15 @@ def main() -> None:
     robot_cfg = W250InterbotixConfig(
         robot_model=ROBOT_MODEL,
         robot_name=ROBOT_NAME,
-        moving_time=MOVING_TIME,
-        accel_time=ACCEL_TIME,
-        cameras={},  # no cameras for this test
+        fps=FPS,          # moving_time and accel_time auto-derived
+        cameras={},       # no cameras for this test
     )
 
     # Build keyboard teleop config
     teleop_cfg = W250KeyboardConfig(
         step_size=0.02,
         gripper_step_size=0.15,
+        control_hz=float(FPS),
     )
 
     robot = W250Interbotix(robot_cfg)

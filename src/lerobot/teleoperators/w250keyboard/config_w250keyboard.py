@@ -51,5 +51,6 @@ class W250KeyboardConfig(TeleoperatorConfig):
     # Gripper step size (range [0,1])
     gripper_step_size: float = 0.1
 
-    # Control loop frequency (Hz) — how fast positions are sent to robot
-    control_hz: float = 20.0
+    # Control loop frequency (Hz) — MUST match robot fps and dataset fps.
+    # Default matches W250InterbotixConfig.fps default (10 Hz).
+    control_hz: float = 12.0

@@ -52,8 +52,8 @@ logger = logging.getLogger("record_replay_test")
 
 ROBOT_MODEL = "wx250s"
 ROBOT_NAME  = "wx250s"
-MOVING_TIME = 2.0
-ACCEL_TIME  = 0.5
+# Calibration uses slow moves (2s) — the robot config auto-computes
+# fast teleop timing (1/fps) but calibrate() overrides internally.
 
 RESULTS_PATH = Path("/tmp/w250_roundtrip_results.json")
 
@@ -113,8 +113,6 @@ def run_test() -> None:
     robot_cfg = W250InterbotixConfig(
         robot_model=ROBOT_MODEL,
         robot_name=ROBOT_NAME,
-        moving_time=MOVING_TIME,
-        accel_time=ACCEL_TIME,
         cameras={},
     )
     robot = W250Interbotix(robot_cfg)
