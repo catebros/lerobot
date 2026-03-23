@@ -72,7 +72,7 @@ FPS        = 15
 DISPLAY_HZ = 4.0
 
 CONTROL_HZ  = float(FPS)
-MOVING_TIME = 0.15            # safe for teleop; use 1/FPS for policy replay
+MOVING_TIME = 1.0 / FPS       # auto-derived: robot completes each move in one period
 ACCEL_TIME  = MOVING_TIME / 4
 
 CALIBRATE_ON_CONNECT = True

@@ -67,10 +67,10 @@ class W250InterbotixConfig(RobotConfig):
     fps: int = 15
 
     # moving_time controls how fast the robot moves between positions.
-    # For TELEOP: use 0.15-0.2s (safe, smooth).
-    # For POLICY REPLAY: use 1/fps (robot keeps up with policy commands).
-    # Default 0.15s is safe for teleoperation.
-    moving_time: Optional[float] = 0.15  # seconds
+    # None → auto-derived as 1/fps so the robot completes each move in exactly
+    # one control period. This guarantees teleop and policy inference use the
+    # same dynamics. Set explicitly (e.g. 0.15) only if you need slower teleop.
+    moving_time: Optional[float] = None  # seconds  (auto: 1/fps)
     accel_time: Optional[float] = None   # seconds  (auto: moving_time / 4)
 
     # Gripper control parameters

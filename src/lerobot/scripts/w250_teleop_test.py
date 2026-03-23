@@ -81,7 +81,7 @@ DISPLAY_HZ  = 5.0            # how often to print state to terminal (Hz)
 
 # Derived — do not change directly
 CONTROL_HZ  = float(FPS)
-MOVING_TIME = 0.15            # safe for teleop; use 1/FPS for policy replay
+MOVING_TIME = 1.0 / FPS       # auto-derived: robot completes each move in one period
 ACCEL_TIME  = MOVING_TIME / 4
 
 # Set True if you want the robot to start by moving to HOME then REST
