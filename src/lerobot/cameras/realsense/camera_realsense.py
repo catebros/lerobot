@@ -137,6 +137,7 @@ class RealSenseCamera(Camera):
         self.frame_lock: Lock = Lock()
         self.latest_frame: np.ndarray | None = None
         self.new_frame_event: Event = Event()
+        self.last_frame_time: float = 0.0  # Track when last frame was captured
 
         self.rotation: int | None = get_cv2_rotation(config.rotation)
 
@@ -464,12 +465,16 @@ class RealSenseCamera(Camera):
 
                 with self.frame_lock:
                     self.latest_frame = color_image
+                    self.last_frame_time = time.time()
                 self.new_frame_event.set()
 
             except DeviceNotConnectedError:
+                logger.error(f"Device disconnected in read thread for {self}")
                 break
             except Exception as e:
-                logger.warning(f"Error reading frame in background thread for {self}: {e}")
+                logger.error(f"Error reading frame in background thread for {self}: {e}", exc_info=True)
+                # Continue trying to read frames rather than failing silently
+                time.sleep(0.1)  # Brief delay before retry
 
     def _start_read_thread(self) -> None:
         """Starts or restarts the background read thread if it's not running."""
@@ -495,7 +500,7 @@ class RealSenseCamera(Camera):
         self.stop_event = None
 
     # NOTE(Steven): Missing implementation for depth for now
-    def async_read(self, timeout_ms: float = 200) -> np.ndarray:
+    def async_read(self, timeout_ms: float = 500) -> np.ndarray:
         """
         Reads the latest available frame data (color) asynchronously.
 
@@ -524,9 +529,12 @@ class RealSenseCamera(Camera):
 
         if not self.new_frame_event.wait(timeout=timeout_ms / 1000.0):
             thread_alive = self.thread is not None and self.thread.is_alive()
+            time_since_last_frame = time.time() - self.last_frame_time if self.last_frame_time > 0 else float('inf')
             raise TimeoutError(
                 f"Timed out waiting for frame from camera {self} after {timeout_ms} ms. "
-                f"Read thread alive: {thread_alive}."
+                f"Read thread alive: {thread_alive}. "
+                f"Time since last successful frame: {time_since_last_frame:.1f}s. "
+                f"Check USB bandwidth, camera connections, or increase timeout."
             )
 
         with self.frame_lock:

@@ -666,7 +666,13 @@ class VideoEncodingManager:
                     logging.debug(
                         f"Cleaning up interrupted episode images for episode {interrupted_episode_index}, camera {key}"
                     )
-                    shutil.rmtree(img_dir)
+                    try:
+                        shutil.rmtree(img_dir)
+                    except OSError as e:
+                        logging.warning(
+                            f"Failed to remove episode directory {img_dir}: {e}. "
+                            "This may be due to background processes still writing files."
+                        )
 
         # Clean up any remaining images directory if it's empty
         img_dir = self.dataset.root / "images"
@@ -675,8 +681,14 @@ class VideoEncodingManager:
         if len(png_files) == 0:
             # Only remove the images directory if no PNG files remain
             if img_dir.exists():
-                shutil.rmtree(img_dir)
-                logging.debug("Cleaned up empty images directory")
+                try:
+                    shutil.rmtree(img_dir)
+                    logging.debug("Cleaned up empty images directory")
+                except OSError as e:
+                    logging.warning(
+                        f"Failed to remove images directory {img_dir}: {e}. "
+                        "Directory may still contain temporary files."
+                    )
         else:
             logging.debug(f"Images directory is not empty, containing {len(png_files)} PNG files")
 

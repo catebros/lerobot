@@ -159,7 +159,9 @@ class OpenCVCamera(Camera):
         # blocking in multi-threaded applications, especially during data collection.
         cv2.setNumThreads(1)
 
-        self.videocapture = cv2.VideoCapture(self.index_or_path, self.backend)
+        # Convert Path to string for cv2.VideoCapture compatibility
+        camera_source = str(self.index_or_path) if isinstance(self.index_or_path, Path) else self.index_or_path
+        self.videocapture = cv2.VideoCapture(camera_source, self.backend)
 
         if not self.videocapture.isOpened():
             self.videocapture.release()
@@ -171,10 +173,32 @@ class OpenCVCamera(Camera):
         self._configure_capture_settings()
 
         if warmup:
+            # Discard initial frames without strict validation during warmup
+            # Some cameras (especially RealSense via V4L2) need multiple frame grabs to stabilize
+            logger.info(f"Warming up {self} for {self.warmup_s}s...")
             start_time = time.time()
-            while time.time() - start_time < self.warmup_s:
-                self.read()
-                time.sleep(0.1)
+            successful_reads = 0
+            attempts = 0
+            max_attempts = self.warmup_s * 20  # ~20 attempts per second
+
+            while time.time() - start_time < self.warmup_s and attempts < max_attempts:
+                ret, frame = self.videocapture.read()
+                attempts += 1
+                if ret and frame is not None:
+                    successful_reads += 1
+                    if successful_reads >= 3:  # Need at least 3 successful reads
+                        break
+                time.sleep(0.05)  # 50ms between attempts
+
+            if successful_reads < 3:
+                self.videocapture.release()
+                self.videocapture = None
+                raise ConnectionError(
+                    f"Failed to warm up {self}. Only {successful_reads} successful frame reads in {attempts} attempts. "
+                    f"Camera may be in use by another process or have incompatible settings."
+                )
+
+            logger.info(f"{self} warmed up successfully ({successful_reads}/{attempts} frames read)")
 
         logger.info(f"{self} connected.")
 
@@ -317,10 +341,24 @@ class OpenCVCamera(Camera):
 
         start_time = time.perf_counter()
 
-        ret, frame = self.videocapture.read()
+        # Retry logic for flaky V4L2 cameras (e.g., RealSense via V4L2)
+        max_retries = 3
+        retry_delay = 0.1  # 100ms
+        ret, frame = False, None
+
+        for attempt in range(max_retries):
+            ret, frame = self.videocapture.read()
+            if ret and frame is not None:
+                break
+            if attempt < max_retries - 1:
+                logger.debug(f"{self} read attempt {attempt + 1} failed, retrying...")
+                time.sleep(retry_delay)
 
         if not ret or frame is None:
-            raise RuntimeError(f"{self} read failed (status={ret}).")
+            raise RuntimeError(
+                f"{self} read failed after {max_retries} attempts (status={ret}). "
+                f"Camera may be unstable or in use by another process."
+            )
 
         processed_frame = self._postprocess_image(frame, color_mode)
 
