@@ -503,7 +503,7 @@ class W250Interbotix(Robot):
         # 1/camera_fps if joints were read first).
         # For depth cameras: async_read() waits for frame N, then we grab
         # latest_depth_frame immediately (same hardware capture, no extra wait).
-        _MAX_DEPTH_MM = 3000.0  # clip depth at 3 m; normalize to uint8 [0,255]
+        _MAX_DEPTH_MM = 700.0  # clip depth at 700 mm (70 cm workspace); normalize to uint8 [0,255]
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
             obs_dict[cam_key] = cam.async_read()
@@ -672,6 +672,51 @@ class W250Interbotix(Robot):
         # Return the actual commands sent
         return {f"{joint}.pos": val for joint, val in goal_pos.items()}
 
+    def _shutdown_ros2(self) -> None:
+        """Stop the Interbotix executor thread, destroy the node, and shut down rclpy."""
+        import rclpy
+
+        core = getattr(self.bot, "core", None)
+        if core is None:
+            # core may live on arm or gripper
+            core = getattr(getattr(self.bot, "arm", None), "core", None)
+
+        if core is not None:
+            # 1. Stop the MultiThreadedExecutor spin loop
+            executor = getattr(core, "executor", None)
+            if executor is not None:
+                try:
+                    executor.shutdown(timeout_sec=2.0)
+                    logger.debug("ROS2 executor shutdown")
+                except Exception as e:
+                    logger.debug(f"executor.shutdown: {e}")
+
+            # 2. Join the spin thread so it exits cleanly
+            spin_thread = getattr(core, "thread", None)
+            if spin_thread is not None and spin_thread.is_alive():
+                try:
+                    spin_thread.join(timeout=2.0)
+                    logger.debug("ROS2 spin thread joined")
+                except Exception as e:
+                    logger.debug(f"spin_thread.join: {e}")
+
+            # 3. Destroy the node
+            try:
+                core.destroy_node()
+                logger.debug("ROS2 node destroyed")
+            except Exception as e:
+                logger.debug(f"destroy_node: {e}")
+
+        # 4. Shutdown the rclpy context (safe to call even if already done)
+        try:
+            if rclpy.ok():
+                rclpy.try_shutdown()
+                logger.info("rclpy shutdown complete")
+        except Exception as e:
+            logger.debug(f"rclpy.try_shutdown: {e}")
+
+        logger.info("Interbotix robot shutdown complete")
+
     def disconnect(self) -> None:
         """Disconnect from robot and cameras"""
         if not self._is_connected:
@@ -713,12 +758,8 @@ class W250Interbotix(Robot):
                     self.bot.arm.core.robot_torque_enable('group', 'arm', False)
                     logger.info("Arm torque disabled")
 
-                # Shutdown the ROS2 node
-                if hasattr(self.bot, 'shutdown'):
-                    self.bot.shutdown()
-                    logger.info("Interbotix robot shutdown complete")
-                else:
-                    logger.warning("Robot shutdown method not available")
+                # Shutdown the ROS2 executor and node
+                self._shutdown_ros2()
             except Exception as e:
                 logger.warning(f"Error during robot shutdown: {e}")
             finally:
