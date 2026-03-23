@@ -95,11 +95,17 @@ class W250Interbotix(Robot):
 
     @property
     def _cameras_ft(self) -> Dict[str, tuple]:
-        """Camera feature types for LeRobot compatibility"""
-        return {
-            cam: (self.config.cameras[cam].height, self.config.cameras[cam].width, 3) 
-            for cam in self.cameras
-        }
+        """Camera feature types for LeRobot compatibility.
+        For cameras with use_depth=True, adds a companion '{cam}_depth' key (H, W, 3) uint8
+        encoded as normalized grayscale-as-RGB (max 3 m), compatible with video encoding.
+        """
+        features: Dict[str, tuple] = {}
+        for cam in self.cameras:
+            cam_cfg = self.config.cameras[cam]
+            features[cam] = (cam_cfg.height, cam_cfg.width, 3)
+            if getattr(cam_cfg, "use_depth", False):
+                features[f"{cam}_depth"] = (cam_cfg.height, cam_cfg.width, 3)
+        return features
 
     @cached_property
     def observation_features(self) -> Dict[str, type | tuple]:
@@ -495,9 +501,21 @@ class W250Interbotix(Robot):
         # Read cameras BEFORE joints so that joint positions are sampled
         # immediately after the camera frame is captured (~0.1 ms gap vs up to
         # 1/camera_fps if joints were read first).
+        # For depth cameras: async_read() waits for frame N, then we grab
+        # latest_depth_frame immediately (same hardware capture, no extra wait).
+        _MAX_DEPTH_MM = 3000.0  # clip depth at 3 m; normalize to uint8 [0,255]
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
             obs_dict[cam_key] = cam.async_read()
+            if getattr(cam, "use_depth", False):
+                with cam.frame_lock:
+                    depth_raw = cam.latest_depth_frame
+                    if depth_raw is not None:
+                        depth_raw = depth_raw.copy()
+                if depth_raw is not None:
+                    depth_f = np.clip(depth_raw.astype(np.float32) / _MAX_DEPTH_MM, 0.0, 1.0)
+                    depth_u8 = (depth_f * 255).astype(np.uint8)
+                    obs_dict[f"{cam_key}_depth"] = np.stack([depth_u8, depth_u8, depth_u8], axis=-1)
             dt_ms = (time.perf_counter() - start) * 1e3
             logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
 

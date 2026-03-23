@@ -65,6 +65,7 @@ from lerobot.robots import (  # noqa: F401
     so_follower,
     unitree_g1,
 )
+from lerobot.robots import w250  # noqa: F401 — registers W250InterbotixConfig
 from lerobot.utils.constants import ACTION
 from lerobot.utils.import_utils import register_third_party_plugins
 from lerobot.utils.robot_utils import precise_sleep

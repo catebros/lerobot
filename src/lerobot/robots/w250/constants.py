@@ -43,11 +43,11 @@ W250_HOME_POSITION = {
 # - wrist_angle: ROTATION/TWIST of the wrist
 # - wrist_rotate: PITCH/TILT of the wrist (up/down angle)
 W250_REST_POSITION = {
-    "waist.pos": 0.0,
-    "shoulder.pos": -0.6, #
-    "elbow.pos": 0.4, #
+    "waist.pos": 0.5,      # 90° anticlockwise from center (π/2 rad, norm = 0.5)
+    "shoulder.pos": -0.6,
+    "elbow.pos": 0.4,
     "forearm_roll.pos": 0.0,
-    "wrist_angle.pos": 0.73, #
+    "wrist_angle.pos": 0.73,
     "wrist_rotate.pos": 0.0,
-    "gripper.pos": 1.0, #
+    "gripper.pos": 1.0,
 }

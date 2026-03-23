@@ -150,9 +150,11 @@ class W250KeyboardTeleop(Teleoperator):
                 "stdin is not a TTY — keyboard teleop requires an interactive terminal"
             )
 
-        # Save current terminal settings and switch to raw mode
+        # Save current terminal settings and switch to cbreak mode.
+        # cbreak (vs raw): no line buffering, still char-by-char, but signal
+        # characters (Ctrl+C → SIGINT) still work — required for lerobot-record.
         self._old_termios = termios.tcgetattr(sys.stdin)
-        tty.setraw(sys.stdin.fileno())
+        tty.setcbreak(sys.stdin.fileno())
 
         self._is_connected = True
         self._quit_requested = False
