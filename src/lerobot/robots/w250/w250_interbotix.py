@@ -16,6 +16,7 @@ import logging
 import math
 import time
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cached_property
 from typing import Any, Dict, Optional
 import numpy as np
@@ -498,15 +499,15 @@ class W250Interbotix(Robot):
 
         obs_dict = {}
 
-        # Read cameras BEFORE joints so that joint positions are sampled
-        # immediately after the camera frame is captured (~0.1 ms gap vs up to
-        # 1/camera_fps if joints were read first).
-        # For depth cameras: async_read() waits for frame N, then we grab
-        # latest_depth_frame immediately (same hardware capture, no extra wait).
+        # Read all cameras in PARALLEL so their async_read() waits overlap.
+        # With N cameras at fps Hz, sequential reads cost N × (1/fps) worst-case;
+        # parallel reads cost 1 × (1/fps) — essential for staying within budget.
         _MAX_DEPTH_MM = 700.0  # clip depth at 700 mm (70 cm workspace); normalize to uint8 [0,255]
-        for cam_key, cam in self.cameras.items():
-            start = time.perf_counter()
-            obs_dict[cam_key] = cam.async_read()
+
+        def _read_one_camera(cam_key: str, cam: Any) -> Dict[str, Any]:
+            t0 = time.perf_counter()
+            color = cam.async_read()
+            result: Dict[str, Any] = {cam_key: color}
             if getattr(cam, "use_depth", False):
                 with cam.frame_lock:
                     depth_raw = cam.latest_depth_frame
@@ -515,9 +516,15 @@ class W250Interbotix(Robot):
                 if depth_raw is not None:
                     depth_f = np.clip(depth_raw.astype(np.float32) / _MAX_DEPTH_MM, 0.0, 1.0)
                     depth_u8 = (depth_f * 255).astype(np.uint8)
-                    obs_dict[f"{cam_key}_depth"] = np.stack([depth_u8, depth_u8, depth_u8], axis=-1)
-            dt_ms = (time.perf_counter() - start) * 1e3
-            logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
+                    result[f"{cam_key}_depth"] = np.repeat(depth_u8[:, :, np.newaxis], 3, axis=2)
+            logger.debug(f"{self} read {cam_key}: {(time.perf_counter()-t0)*1e3:.1f}ms")
+            return result
+
+        if self.cameras:
+            with ThreadPoolExecutor(max_workers=len(self.cameras)) as pool:
+                futures = {pool.submit(_read_one_camera, k, v): k for k, v in self.cameras.items()}
+                for fut in as_completed(futures):
+                    obs_dict.update(fut.result())
 
         # Update and get joint positions right after camera frame
         start = time.perf_counter()
@@ -547,8 +554,8 @@ class W250Interbotix(Robot):
         if not self.bot:
             raise DeviceNotConnectedError("Interbotix robot not initialized")
 
-        # Extract joint positions from action
-        goal_pos = {key.removesuffix(".pos"): val for key, val in action.items() if key.endswith(".pos")}
+        # Extract joint positions from action (convert Tensors/arrays to plain float)
+        goal_pos = {key.removesuffix(".pos"): float(val) for key, val in action.items() if key.endswith(".pos")}
         
         # Apply safety limits if configured
         if self.config.max_relative_target is not None:
