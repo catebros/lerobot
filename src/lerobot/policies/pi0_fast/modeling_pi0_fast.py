@@ -19,7 +19,11 @@ import logging
 import math
 from collections import deque
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypedDict, Unpack
+try:
+    from typing import Unpack
+except ImportError:  # Python < 3.11
+    from typing_extensions import Unpack
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 import numpy as np
 import torch

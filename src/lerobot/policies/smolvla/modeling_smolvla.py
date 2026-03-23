@@ -54,7 +54,11 @@ policy = SmolVLAPolicy.from_pretrained("lerobot/smolvla_base")
 
 import math
 from collections import deque
-from typing import TypedDict, Unpack
+try:
+    from typing import Unpack
+except ImportError:  # Python < 3.11
+    from typing_extensions import Unpack
+from typing import TypedDict
 
 import torch
 import torch.nn.functional as F  # noqa: N812

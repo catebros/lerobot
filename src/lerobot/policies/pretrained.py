@@ -19,7 +19,11 @@ import os
 from importlib.resources import files
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TypedDict, TypeVar, Unpack
+try:
+    from typing import Unpack
+except ImportError:  # Python < 3.11
+    from typing_extensions import Unpack
+from typing import TypedDict, TypeVar
 
 import packaging
 import safetensors
