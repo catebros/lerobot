@@ -94,9 +94,8 @@ class W250KeyboardTeleop(Teleoperator):
         # Call sync_with_robot() to update if the robot is somewhere else.
         self._positions: dict[str, float] = dict(W250_REST_POSITION)
 
-        # Keys currently held down
-        self._held_keys: set[str] = set()
-        self._held_lock = threading.Lock()
+        # Set to True whenever a movement key is pressed; consumed by get_teleop_events()
+        self._intervention_flag: bool = False
 
         # One-shot flags set by P / F keys, consumed by the main loop
         self._save_pose_requested = False
@@ -185,24 +184,14 @@ class W250KeyboardTeleop(Teleoperator):
         logger.info("W250KeyboardTeleop disconnected")
 
     def get_action(self) -> dict[str, float]:
-        """Apply held keys to current positions and return absolute positions."""
-        with self._held_lock:
-            held = set(self._held_keys)
-
-        for key in held:
-            if key in _KEY_MAP:
-                joint, direction = _KEY_MAP[key]
-                delta = direction * self._step_size
-                if joint == "gripper.pos":
-                    self._positions[joint] = max(0.0, min(1.0, self._positions[joint] + delta))
-                else:
-                    self._positions[joint] = max(-1.0, min(1.0, self._positions[joint] + delta))
-
+        """Return current absolute joint positions."""
         return dict(self._positions)
 
     def get_teleop_events(self) -> dict[str, Any]:
+        is_intervention = self._intervention_flag
+        self._intervention_flag = False
         return {
-            TeleopEvents.IS_INTERVENTION: len(self._held_keys) > 0,
+            TeleopEvents.IS_INTERVENTION: is_intervention,
             TeleopEvents.TERMINATE_EPISODE: self._quit_requested,
             TeleopEvents.SUCCESS: False,
             TeleopEvents.RERECORD_EPISODE: False,
@@ -242,7 +231,7 @@ class W250KeyboardTeleop(Teleoperator):
     # ── Internal ───────────────────────────────────────────────────────────
 
     def _read_keys(self) -> None:
-        """Background thread: reads chars from stdin and updates _held_keys."""
+        """Background thread: reads chars from stdin and updates _positions."""
         while self._is_connected:
             try:
                 ch = sys.stdin.read(1)
@@ -280,17 +269,15 @@ class W250KeyboardTeleop(Teleoperator):
 
             # Reset to REST position
             if ch == _RESET_REST_KEY:
-                with self._held_lock:
-                    self._positions.update(W250_REST_POSITION)
+                self._positions.update(W250_REST_POSITION)
                 sys.stdout.write("\r[keyboard] Reset to REST position  \r")
                 sys.stdout.flush()
                 continue
 
             # Reset to HOME (all zeros)
             if ch == _RESET_HOME_KEY:
-                with self._held_lock:
-                    for k in self._positions:
-                        self._positions[k] = 0.0
+                for k in self._positions:
+                    self._positions[k] = 0.0
                 sys.stdout.write("\r[keyboard] Reset to HOME position  \r")
                 sys.stdout.flush()
                 continue
@@ -316,22 +303,19 @@ class W250KeyboardTeleop(Teleoperator):
             # fully open yet → motor keeps driving.
             if ch == _GRIPPER_OPEN_KEY:
                 self._positions["gripper.pos"] = min(1.0, self._positions["gripper.pos"] + self.config.gripper_step_size)
+                self._intervention_flag = True
                 continue
 
             if ch == _GRIPPER_CLOSE_KEY:
                 self._positions["gripper.pos"] = max(0.0, self._positions["gripper.pos"] - self.config.gripper_step_size)
+                self._intervention_flag = True
                 continue
 
-            # Arm joint keys — mark as held while pressed
-            # Note: termios raw mode only gives key-down events (no key-up)
-            # We simulate hold by keeping the key in _held_keys and removing
-            # when the same key is pressed again (toggle), or after one step.
-            # Since we can't detect key-up in raw mode, we treat each press
-            # as a single step applied directly to _positions.
             if ch in _KEY_MAP:
                 joint, direction = _KEY_MAP[ch]
                 delta = direction * self._step_size
                 self._positions[joint] = max(-1.0, min(1.0, self._positions[joint] + delta))
+                self._intervention_flag = True
 
     def _print_controls(self) -> None:
         controls = (

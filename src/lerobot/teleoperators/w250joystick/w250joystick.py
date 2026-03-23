@@ -107,6 +107,7 @@ class GamepadController(Node):
         with self.lock:
             self.axes = list(msg.axes)
             self.buttons = list(msg.buttons)
+        pass
 
     def get_axes_values(self):
         """Get current joystick axes values."""

@@ -155,7 +155,11 @@ def main() -> None:
 
     teleop_cfg = W250JoystickConfig(
         control_hz=float(FPS),
-        step_size=0.03,
+        x_step_size=0.03,
+        y_step_size=0.03,
+        z_step_size=0.03,
+        forearm_step_size=0.03,
+        wrist_step_size=0.03,
         gripper_step_size=0.15,
     )
 

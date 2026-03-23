@@ -492,22 +492,24 @@ class W250Interbotix(Robot):
 
         obs_dict = {}
 
-        # Update and get joint positions
-        start = time.perf_counter()
-        self._update_positions()
-        
-        with self._state_lock:
-            obs_dict.update(self._current_positions.copy())
-            
-        dt_ms = (time.perf_counter() - start) * 1e3
-        logger.debug(f"{self} read joint states: {dt_ms:.1f}ms")
-
-        # Capture camera images
+        # Read cameras BEFORE joints so that joint positions are sampled
+        # immediately after the camera frame is captured (~0.1 ms gap vs up to
+        # 1/camera_fps if joints were read first).
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
             obs_dict[cam_key] = cam.async_read()
             dt_ms = (time.perf_counter() - start) * 1e3
             logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
+
+        # Update and get joint positions right after camera frame
+        start = time.perf_counter()
+        self._update_positions()
+
+        with self._state_lock:
+            obs_dict.update(self._current_positions.copy())
+
+        dt_ms = (time.perf_counter() - start) * 1e3
+        logger.debug(f"{self} read joint states: {dt_ms:.1f}ms")
 
         return obs_dict
 

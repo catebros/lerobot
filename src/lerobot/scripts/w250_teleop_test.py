@@ -182,8 +182,8 @@ def main() -> None:
 
     # Build keyboard teleop config
     teleop_cfg = W250KeyboardConfig(
-        step_size=0.02,
-        gripper_step_size=0.15,
+        step_size=0.01,
+        gripper_step_size=0.10,
         control_hz=float(FPS),
     )
 
