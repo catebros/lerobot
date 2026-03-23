@@ -9,42 +9,34 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 """
-W250 Keyboard Teleoperation Test Script
-========================================
+W250 Joystick Teleoperation Test Script
+=========================================
 
-Tests the W250Interbotix robot middleware by teleoprating it with the keyboard.
-Inspired by lerobot_record.py but simplified for simulation/testing purposes:
-  - No dataset recording
-  - Prints real-time robot state (joint positions + timing)
-  - Validates that send_action() and get_observation() work correctly
-  - Tests gripper open/close behavior
+Tests the W250Interbotix robot middleware by teleoprating it with a
+Logitech F710 gamepad via ROS2 joy node.
 
-Usage (in WSL with ROS2 sourced and interbotix control node running):
+Requirements:
+  - Joystick attached to WSL (see run_w250_joystick_test.sh for usbipd steps)
+  - ros2 run joy joy_node  (launched automatically by the .sh script)
 
-    # Terminal 1 — launch interbotix control
-    $ source ~/interbotix_ws/install/setup.bash
-    $ ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx250s
-
-    # Terminal 2 — run this script
-    $ source ~/interbotix_ws/install/setup.bash
-    $ cd ~/your_lerobot_ws
-    $ python -m lerobot.scripts.w250_teleop_test
+Usage (run via shell script — handles usbipd + joy_node automatically):
+    $ bash ~/run_w250_joystick_test.sh
 
 Controls:
-    A / D       Waist       (left / right)
-    W / S       Shoulder    (up / down)
-    I / K       Elbow       (up / down)
-    J / L       Forearm roll
-    U / O       Wrist angle
-    T / Y       Wrist rotate
-    G           Gripper open
-    H           Gripper close
-    R           Reset to REST position
-    0           Reset to HOME
-    + / -       Step size up / down
-    P           Save current pose to /tmp/saved_pose.json
-    F           Load saved pose and send to robot, then print error
-    Q / ESC     Quit
+    Left Stick X    → Waist       (left / right)
+    Left Stick Y    → Shoulder    (up / down)
+    Right Stick Y   → Elbow       (up / down)
+    Right Stick X   → Wrist angle
+    D-Pad L/R       → Forearm roll
+    LT / RT         → Wrist rotate
+    LB              → Gripper open
+    RB              → Gripper close
+    Y               → Reset to REST position
+    Back            → Toggle intervention flag
+    A               → Save current pose to /tmp/saved_pose.json
+    B               → Replay saved pose + print round-trip error
+    Start           → Rerecord episode signal
+    Ctrl+C          → Quit
 """
 
 import csv
@@ -55,63 +47,56 @@ import sys
 import time
 from pathlib import Path
 
-# ── Setup logging before any other imports ────────────────────────────────────
+# ── Setup logging ─────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%H:%M:%S",
 )
-logger = logging.getLogger("w250_teleop_test")
+logger = logging.getLogger("w250_joystick_test")
 
 # ── Imports ───────────────────────────────────────────────────────────────────
 from lerobot.robots.w250.config_w250_interbotix import W250InterbotixConfig
 from lerobot.robots.w250.w250_interbotix import W250Interbotix
-from lerobot.teleoperators.w250keyboard import W250KeyboardConfig, W250KeyboardTeleop
+from lerobot.teleoperators.w250joystick import W250JoystickConfig, W250JoystickTeleop
 
 
-# ── Configuration — adjust to match your setup ───────────────────────────────
+# ── Configuration ─────────────────────────────────────────────────────────────
 
-ROBOT_MODEL = "wx250s"       # Interbotix model name (wx250, wx250s, etc.)
-ROBOT_NAME  = "wx250s"       # ROS2 namespace
+ROBOT_MODEL = "wx250s"
+ROBOT_NAME  = "wx250s"
 
 # Frequency — single value, all timing derived from it.
 # Must match: dataset fps, camera fps, W250InterbotixConfig.fps.
-FPS         = 15             # Hz — change only this line
-DISPLAY_HZ  = 5.0            # how often to print state to terminal (Hz)
+FPS        = 15
+DISPLAY_HZ = 4.0
 
-# Derived — do not change directly
 CONTROL_HZ  = float(FPS)
 MOVING_TIME = 0.15            # safe for teleop; use 1/FPS for policy replay
 ACCEL_TIME  = MOVING_TIME / 4
 
-# Set True if you want the robot to start by moving to HOME then REST
 CALIBRATE_ON_CONNECT = True
 
-# Gripper log file — written to /tmp for easy access from WSL
-GRIPPER_LOG_PATH = Path("/tmp/gripper_log.csv")
-
-# Saved pose file (P = save, F = replay)
-POSE_LOG_PATH = Path("/tmp/saved_pose.json")
+GRIPPER_LOG_PATH = Path("/tmp/gripper_log_joystick.csv")
+POSE_LOG_PATH    = Path("/tmp/saved_pose.json")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def format_state(obs: dict[str, float]) -> str:
-    """Format joint state as a compact one-line string."""
-    joint_keys = [
+def format_state(obs: dict) -> str:
+    keys = [
         "waist.pos", "shoulder.pos", "elbow.pos",
         "forearm_roll.pos", "wrist_angle.pos", "wrist_rotate.pos", "gripper.pos",
     ]
     parts = []
-    for k in joint_keys:
+    for k in keys:
         if k in obs:
             short = k.replace(".pos", "")[:6]
             parts.append(f"{short}:{obs[k]:+.3f}")
     return "  ".join(parts)
 
 
-def format_action_diff(action: dict[str, float], obs: dict[str, float]) -> str:
-    """Show difference between commanded and observed positions."""
+def format_action_diff(action: dict, obs: dict) -> str:
     diffs = []
     for k in action:
         if k in obs and isinstance(obs[k], float):
@@ -121,78 +106,64 @@ def format_action_diff(action: dict[str, float], obs: dict[str, float]) -> str:
     return ", ".join(diffs) if diffs else "—"
 
 
-def save_pose(obs: dict[str, float]) -> None:
-    """Save current observation to POSE_LOG_PATH."""
+def save_pose(obs: dict) -> None:
     data = {k: v for k, v in obs.items() if isinstance(v, float)}
     POSE_LOG_PATH.write_text(json.dumps(data, indent=2))
-    sys.stdout.write(f"\n[POSE] Saved to {POSE_LOG_PATH}: {format_state(data)}\n")
+    print(f"\n[POSE] Saved → {POSE_LOG_PATH}: {format_state(data)}")
     sys.stdout.flush()
 
 
 def replay_pose(robot, path: Path) -> None:
-    """
-    Load saved pose and send it as an action. Then read back the observation
-    and print per-joint error so we can verify round-trip accuracy.
-
-    Note: gripper is excluded from replay — it is effort-controlled and a
-    direct position replay doesn't make sense for it.
-    """
     if not path.exists():
-        sys.stdout.write("\n[POSE] No saved pose found — press P first.\n")
+        print("\n[POSE] No saved pose found — press A first.")
         sys.stdout.flush()
         return
 
     saved = json.loads(path.read_text())
     arm_keys = [k for k in saved if k != "gripper.pos"]
 
-    sys.stdout.write(f"\n[POSE] Replaying: {format_state(saved)}\n")
+    print(f"\n[POSE] Replaying: {format_state(saved)}")
     sys.stdout.flush()
 
-    # Send action (arm joints only — gripper excluded)
     action = {k: saved[k] for k in arm_keys}
     robot.send_action(action)
 
-    # Wait for the robot to (approximately) finish moving
     time.sleep(robot.config.moving_time + 0.2)
 
-    # Read back observation and compare
     obs_after = robot.get_observation()
-    sys.stdout.write("[POSE] Round-trip error (saved → action → observed):\n")
+    print("[POSE] Round-trip error (saved → action → observed):")
     max_err = 0.0
     for k in arm_keys:
         if k in obs_after:
             err = abs(saved[k] - obs_after[k])
             max_err = max(max_err, err)
             flag = "  ✓" if err < 0.02 else "  !" if err < 0.05 else "  ✗ LARGE"
-            sys.stdout.write(f"  {k:<22} saved={saved[k]:+.4f}  obs={obs_after[k]:+.4f}  err={err:.4f}{flag}\n")
-    sys.stdout.write(f"  max_err={max_err:.4f}  ({'OK' if max_err < 0.05 else 'CHECK LIMITS'})\n")
+            print(f"  {k:<22} saved={saved[k]:+.4f}  obs={obs_after[k]:+.4f}  err={err:.4f}{flag}")
+    print(f"  max_err={max_err:.4f}  ({'OK' if max_err < 0.05 else 'CHECK LIMITS'})")
     sys.stdout.flush()
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    # Build robot config
     robot_cfg = W250InterbotixConfig(
         robot_model=ROBOT_MODEL,
         robot_name=ROBOT_NAME,
-        fps=FPS,          # moving_time and accel_time auto-derived
-        cameras={},       # no cameras for this test
+        fps=FPS,
+        cameras={},
     )
 
-    # Build keyboard teleop config
-    teleop_cfg = W250KeyboardConfig(
-        step_size=0.02,
-        gripper_step_size=0.15,
+    teleop_cfg = W250JoystickConfig(
         control_hz=float(FPS),
+        step_size=0.03,
+        gripper_step_size=0.15,
     )
 
-    robot = W250Interbotix(robot_cfg)
-    teleop = W250KeyboardTeleop(teleop_cfg)
+    robot  = W250Interbotix(robot_cfg)
+    teleop = W250JoystickTeleop(teleop_cfg)
 
-    # Handle Ctrl+C gracefully — restore terminal before exiting
     def _sigint_handler(sig, frame):
-        logger.info("SIGINT received — shutting down...")
+        logger.info("SIGINT — shutting down...")
         if teleop.is_connected:
             teleop.disconnect()
         if robot.is_connected:
@@ -219,26 +190,14 @@ def main() -> None:
 
     logger.info(f"Initial state: {format_state(initial_obs)}")
 
-    # Connect keyboard and sync positions with robot state
     teleop.connect()
     teleop.sync_with_robot(initial_obs)
+    logger.info("Joystick connected and synced with robot state.")
+    logger.info("Waiting for first joy message on /joy topic...")
 
     # ── Gripper CSV log ────────────────────────────────────────────────────────
-    # Columns:
-    #   t_s          — seconds since start
-    #   step         — control loop step number
-    #   event        — G_PRESSED | H_PRESSED | STEP
-    #   kb_gripper   — keyboard gripper.pos  [0,1]
-    #   kb_delta     — change in keyboard gripper.pos this cycle
-    #   effort_sent  — PWM effort published (+250 / −250 / 0)
-    #   finger_m     — left_finger actual position [meters]
-    #   finger_norm  — finger_m normalized to [0,1]
-    #   lower_m      — left_finger URDF lower limit [meters]
-    #   upper_m      — left_finger URDF upper limit [meters]
-    #   gripper_moving — gripper_moving flag (True/False)
-    #   note         — at_upper | at_lower | open | close | stop | n/a
     gripper_log_f = open(GRIPPER_LOG_PATH, "w", newline="")
-    gripper_csv = csv.writer(gripper_log_f)
+    gripper_csv   = csv.writer(gripper_log_f)
     gripper_csv.writerow([
         "t_s", "step", "event",
         "kb_gripper", "kb_delta",
@@ -249,68 +208,63 @@ def main() -> None:
     logger.info(f"Gripper log → {GRIPPER_LOG_PATH}")
 
     def _read_gripper_hw():
-        """Read gripper hardware state. Returns (effort, finger_m, lower, upper, moving)."""
         try:
             g = robot.bot.gripper
-            effort = float(g.gripper_command.cmd)
-            finger_m = float(g.get_finger_position())
-            lower = float(g.left_finger_lower_limit)
-            upper = float(g.left_finger_upper_limit)
-            moving = bool(g.gripper_moving)
+            effort    = float(g.gripper_command.cmd)
+            finger_m  = float(g.get_finger_position())
+            lower     = float(g.left_finger_lower_limit)
+            upper     = float(g.left_finger_upper_limit)
+            moving    = bool(g.gripper_moving)
             return effort, finger_m, lower, upper, moving
         except Exception:
             return 0.0, 0.0, 0.015, 0.037, False
 
     # ── Control loop ──────────────────────────────────────────────────────────
-    loop_dt = 1.0 / CONTROL_HZ
-    display_dt = 1.0 / DISPLAY_HZ
-    last_display_t = 0.0
+    loop_dt      = 1.0 / CONTROL_HZ
+    display_dt   = 1.0 / DISPLAY_HZ
+    last_disp_t  = 0.0
 
-    step = 0
-    total_action_time_ms = 0.0
-    total_obs_time_ms = 0.0
-    t_start = time.perf_counter()
-    prev_kb_gripper = initial_obs.get("gripper.pos", 0.0)
+    step                  = 0
+    total_action_time_ms  = 0.0
+    total_obs_time_ms     = 0.0
+    t_start               = time.perf_counter()
+    prev_kb_gripper       = initial_obs.get("gripper.pos", 1.0)
 
-    logger.info(f"Starting control loop at {CONTROL_HZ:.0f} Hz. Press Q or ESC to quit.\n")
+    logger.info(f"Control loop at {CONTROL_HZ:.0f} Hz. Press Ctrl+C to quit.\n")
 
     while teleop.is_connected:
         loop_start = time.perf_counter()
 
-        # ── Get teleop events ──────────────────────────────────────────────
+        # ── Teleop events ──────────────────────────────────────────────────
         events = teleop.get_teleop_events()
         if events.get("terminate_episode", False):
-            logger.info("Quit requested from keyboard.")
+            logger.info("Terminate signal from gamepad.")
             break
 
-        # ── Pose save / replay (P / F) ─────────────────────────────────────
+        # ── Pose save / replay (A / B) ─────────────────────────────────────
         if teleop.consume_save_pose():
-            # Read latest observation and save it
             try:
                 current_obs = robot.get_observation()
                 save_pose(current_obs)
-                teleop.sync_with_robot(current_obs)  # re-sync keyboard to actual pos
+                teleop.sync_with_robot(current_obs)
             except Exception as e:
-                sys.stdout.write(f"\n[POSE] Save failed: {e}\n")
-                sys.stdout.flush()
+                print(f"\n[POSE] Save failed: {e}")
 
         if teleop.consume_replay_pose():
             try:
                 replay_pose(robot, POSE_LOG_PATH)
-                # Re-sync keyboard so next action doesn't jump
                 current_obs = robot.get_observation()
                 teleop.sync_with_robot(current_obs)
             except Exception as e:
-                sys.stdout.write(f"\n[POSE] Replay failed: {e}\n")
-                sys.stdout.flush()
+                print(f"\n[POSE] Replay failed: {e}")
 
-        # ── Get action from keyboard ───────────────────────────────────────
-        action = teleop.get_action()
-        kb_gripper = action.get("gripper.pos", 0.0)
-        kb_delta = kb_gripper - prev_kb_gripper
+        # ── Get action ─────────────────────────────────────────────────────
+        action          = teleop.get_action()
+        kb_gripper      = action.get("gripper.pos", 1.0)
+        kb_delta        = kb_gripper - prev_kb_gripper
         prev_kb_gripper = kb_gripper
 
-        # ── Send action to robot ───────────────────────────────────────────
+        # ── Send action ────────────────────────────────────────────────────
         t0 = time.perf_counter()
         try:
             sent_action = robot.send_action(action)
@@ -320,20 +274,18 @@ def main() -> None:
         action_ms = (time.perf_counter() - t0) * 1e3
         total_action_time_ms += action_ms
 
-        # ── Read gripper hardware state (after send_action) ───────────────
+        # ── Gripper hardware state ─────────────────────────────────────────
         effort, finger_m, lower_m, upper_m, gripper_moving = _read_gripper_hw()
-        finger_norm = (finger_m - lower_m) / (upper_m - lower_m) if (upper_m > lower_m) else 0.0
-        t_s = time.perf_counter() - t_start
+        finger_norm = (finger_m - lower_m) / (upper_m - lower_m) if upper_m > lower_m else 0.0
+        t_s         = time.perf_counter() - t_start
 
-        # Classify event
         if kb_delta > 0.001:
-            event = "G_PRESSED"
+            event = "LB_PRESSED"
         elif kb_delta < -0.001:
-            event = "H_PRESSED"
+            event = "RB_PRESSED"
         else:
             event = "STEP"
 
-        # Note what the motor is doing
         if effort > 1.0:
             note = "open"
         elif effort < -1.0:
@@ -345,7 +297,6 @@ def main() -> None:
         else:
             note = "stop"
 
-        # Write CSV row — always for G/H events, every 5 steps otherwise
         if event != "STEP" or step % 5 == 0:
             gripper_csv.writerow([
                 f"{t_s:.3f}", step, event,
@@ -357,7 +308,7 @@ def main() -> None:
             ])
             gripper_log_f.flush()
 
-        # ── Read observation from robot ────────────────────────────────────
+        # ── Get observation ────────────────────────────────────────────────
         t0 = time.perf_counter()
         try:
             obs = robot.get_observation()
@@ -369,33 +320,30 @@ def main() -> None:
 
         step += 1
 
-        # ── Display state periodically ────────────────────────────────────
+        # ── Display ────────────────────────────────────────────────────────
         now = time.perf_counter()
-        if now - last_display_t >= display_dt:
-            last_display_t = now
-            avg_action = total_action_time_ms / step
+        if now - last_disp_t >= display_dt:
+            last_disp_t = now
+            avg_act = total_action_time_ms / step
             avg_obs = total_obs_time_ms / step
             diff_str = format_action_diff(sent_action, obs)
-
-            sys.stdout.write(
+            print(
                 f"\r[step {step:5d}] {format_state(obs)}"
-                f"  |  cmd_diff=[{diff_str}]"
-                f"  |  act:{avg_action:.1f}ms obs:{avg_obs:.1f}ms"
-                f"  |  step_size={teleop._step_size:.3f}"
-                "    "
+                f"  |  diff=[{diff_str}]"
+                f"  |  act:{avg_act:.1f}ms obs:{avg_obs:.1f}ms"
+                "    ",
+                end="",
+                flush=True,
             )
-            sys.stdout.flush()
 
-        # ── Maintain loop rate ─────────────────────────────────────────────
+        # ── Loop rate ──────────────────────────────────────────────────────
         elapsed = time.perf_counter() - loop_start
         sleep_t = loop_dt - elapsed
         if sleep_t > 0:
             time.sleep(sleep_t)
 
     # ── Cleanup ───────────────────────────────────────────────────────────────
-    sys.stdout.write("\n")
-    sys.stdout.flush()
-
+    print()
     gripper_log_f.close()
     logger.info(f"Gripper log saved to {GRIPPER_LOG_PATH}")
 
@@ -409,7 +357,7 @@ def main() -> None:
             f"get_observation: {total_obs_time_ms/step:.1f}ms"
         )
 
-    logger.info("Moving robot to sleep pose before disconnect...")
+    logger.info("Moving robot to sleep pose...")
     try:
         robot.bot.arm.go_to_sleep_pose(blocking=True)
     except Exception as e:

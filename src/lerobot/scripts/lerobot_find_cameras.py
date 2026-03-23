@@ -172,6 +172,10 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
             rs_config = RealSenseCameraConfig(
                 serial_number_or_name=cam_id,
                 color_mode=ColorMode.RGB,
+                fps=15,
+                width=640,
+                height=480,
+                warmup_s=3,
             )
             instance = RealSenseCamera(rs_config)
         else:
@@ -242,6 +246,8 @@ def save_images_from_all_cameras(
         camera_type: Optional string to filter cameras ("realsense" or "opencv").
                             If None, uses all detected cameras.
     """
+    import gc
+
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Saving images to {output_dir}")
     all_camera_metadata = find_and_print_cameras(camera_type_filter=camera_type)
@@ -249,6 +255,11 @@ def save_images_from_all_cameras(
     if not all_camera_metadata:
         logger.warning("No cameras detected matching the criteria. Cannot save images.")
         return
+
+    # Release any RealSense context handles held by the discovery phase
+    # before opening pipelines, otherwise try_wait_for_frames may fail.
+    gc.collect()
+    time.sleep(1.5)
 
     cameras_to_use = []
     for cam_meta in all_camera_metadata:

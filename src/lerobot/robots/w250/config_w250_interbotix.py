@@ -64,13 +64,14 @@ class W250InterbotixConfig(RobotConfig):
     # Single source of truth for the whole system.
     # All timing parameters are derived from this value in __post_init__.
     # Must match: dataset fps, camera fps, and control loop rate.
-    fps: int = 12
+    fps: int = 15
 
-    # Leave as None to auto-compute from fps.  Set explicitly only if you need
-    # to override (e.g. slower moves during calibration — but calibrate() does
-    # this internally already).
-    moving_time: Optional[float] = None   # seconds  (auto: 1 / fps)
-    accel_time: Optional[float] = None    # seconds  (auto: moving_time / 4)
+    # moving_time controls how fast the robot moves between positions.
+    # For TELEOP: use 0.15-0.2s (safe, smooth).
+    # For POLICY REPLAY: use 1/fps (robot keeps up with policy commands).
+    # Default 0.15s is safe for teleoperation.
+    moving_time: Optional[float] = 0.15  # seconds
+    accel_time: Optional[float] = None   # seconds  (auto: moving_time / 4)
 
     # Gripper control parameters
     gripper_pressure: float = 0.5          # Gripper pressure (0.0-1.0)

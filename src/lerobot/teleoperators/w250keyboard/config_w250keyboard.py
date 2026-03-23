@@ -53,4 +53,4 @@ class W250KeyboardConfig(TeleoperatorConfig):
 
     # Control loop frequency (Hz) — MUST match robot fps and dataset fps.
     # Default matches W250InterbotixConfig.fps default (10 Hz).
-    control_hz: float = 12.0
+    control_hz: float = 15.0

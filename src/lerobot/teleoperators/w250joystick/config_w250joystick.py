@@ -34,7 +34,7 @@ class W250JoystickConfig(TeleoperatorConfig):
 
     # Control loop frequency (Hz) — MUST match robot fps and dataset fps.
     # Default matches W250InterbotixConfig.fps default (10 Hz).
-    control_hz: float = 12.0
+    control_hz: float = 15.0
 
     # Step sizes balanced for smooth control (moving_time=0.5s)
     x_step_size: float = 0.015  # Shoulder increment

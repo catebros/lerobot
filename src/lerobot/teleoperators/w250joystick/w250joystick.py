@@ -68,6 +68,10 @@ class GamepadController(Node):
         self.episode_end_status = None
         self.intervention_flag = True  # Start with intervention enabled
 
+        # One-shot flags for pose save (A) / replay (B), consumed by the main loop
+        self._save_pose_requested = False
+        self._replay_pose_requested = False
+
         # Current joint positions (incremental control).
         # Initialized to REST position so the first action after robot.connect()
         # (which calibrates to REST) produces zero delta — no lurch on start.
@@ -95,6 +99,8 @@ class GamepadController(Node):
         self.get_logger().info("  Back: Toggle intervention (emergency stop)")
         self.get_logger().info("  Y: Reset to rest position (tucked/safe)")
         self.get_logger().info("  Start: Rerecord episode")
+        self.get_logger().info("  A: Save current pose to /tmp/saved_pose.json")
+        self.get_logger().info("  B: Replay saved pose + print round-trip error")
 
     def joy_callback(self, msg: Joy):
         """Callback for Joy messages from ROS2."""
@@ -243,8 +249,28 @@ class GamepadController(Node):
         else:
             self.episode_end_status = None
 
+        # Pose save (A) / replay (B) — one-shot on rising edge
+        if self._button_rising_edge(self.config.button_a):
+            self._save_pose_requested = True
+        if self._button_rising_edge(self.config.button_b):
+            self._replay_pose_requested = True
+
         # Snapshot current buttons for next call's edge detection
         self._prev_buttons = buttons
+
+    def consume_save_pose(self) -> bool:
+        """Return True (once) if A was pressed since the last call."""
+        if self._save_pose_requested:
+            self._save_pose_requested = False
+            return True
+        return False
+
+    def consume_replay_pose(self) -> bool:
+        """Return True (once) if B was pressed since the last call."""
+        if self._replay_pose_requested:
+            self._replay_pose_requested = False
+            return True
+        return False
 
 
 class W250JoystickTeleop(Teleoperator):
@@ -320,6 +346,18 @@ class W250JoystickTeleop(Teleoperator):
             self.executor.spin()
         except Exception as e:
             logging.error(f"Error in ROS2 spin: {e}")
+
+    def consume_save_pose(self) -> bool:
+        """Return True (once) if A was pressed since the last call."""
+        if self.gamepad_node is None:
+            return False
+        return self.gamepad_node.consume_save_pose()
+
+    def consume_replay_pose(self) -> bool:
+        """Return True (once) if B was pressed since the last call."""
+        if self.gamepad_node is None:
+            return False
+        return self.gamepad_node.consume_replay_pose()
 
     def sync_with_robot(self, robot_observation: dict[str, Any]) -> None:
         """

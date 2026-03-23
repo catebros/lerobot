@@ -18,7 +18,8 @@ robot_name: wx250s    # ROS2 namespace for the robot
 #   accel_time  = moving_time / 4
 #   camera fps  = fps        (overridden automatically in __post_init__)
 # Must also match: lerobot_record --dataset.fps
-fps: 12
+fps: 15
+moving_time: 0.15   # safe for teleop; use 0.067 (1/fps) for policy replay
 
 # Gripper parameters
 gripper_pressure: 0.5
@@ -30,17 +31,18 @@ max_relative_target: null
 disable_torque_on_disconnect: true
 
 # Camera configuration — fps is auto-set to match robot fps above.
-# You only need to set index_or_path, width, height.
+# Uses Intel RealSense D415 cameras identified by serial number.
+# Run `python3 -m lerobot.scripts.lerobot_find_cameras` to list available cameras and serials.
 cameras:
   cam_wrist:
-    type: opencv
-    index_or_path: 0
+    type: intelrealsense
+    serial_number_or_name: "220322061194"
     width: 640
     height: 480
     # fps: set automatically to match robot fps (12)
   cam_front:
-    type: opencv
-    index_or_path: 2
+    type: intelrealsense
+    serial_number_or_name: "217222063884"
     width: 640
     height: 480
     # fps: set automatically to match robot fps (12)
