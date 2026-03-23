@@ -80,7 +80,7 @@ def log_rerun_data(
             key = k if str(k).startswith(OBS_PREFIX) else f"{OBS_STR}.{k}"
 
             if _is_scalar(v):
-                rr.log(key, rr.Scalars(float(v)))
+                rr.log(key, rr.Scalar(float(v)))
             elif isinstance(v, np.ndarray):
                 arr = v
                 # Convert CHW -> HWC when needed
@@ -88,7 +88,7 @@ def log_rerun_data(
                     arr = np.transpose(arr, (1, 2, 0))
                 if arr.ndim == 1:
                     for i, vi in enumerate(arr):
-                        rr.log(f"{key}_{i}", rr.Scalars(float(vi)))
+                        rr.log(f"{key}_{i}", rr.Scalar(float(vi)))
                 else:
                     img_entity = rr.Image(arr).compress() if compress_images else rr.Image(arr)
                     rr.log(key, entity=img_entity, static=True)
@@ -100,13 +100,13 @@ def log_rerun_data(
             key = k if str(k).startswith(ACTION_PREFIX) else f"{ACTION}.{k}"
 
             if _is_scalar(v):
-                rr.log(key, rr.Scalars(float(v)))
+                rr.log(key, rr.Scalar(float(v)))
             elif isinstance(v, np.ndarray):
                 if v.ndim == 1:
                     for i, vi in enumerate(v):
-                        rr.log(f"{key}_{i}", rr.Scalars(float(vi)))
+                        rr.log(f"{key}_{i}", rr.Scalar(float(vi)))
                 else:
                     # Fall back to flattening higher-dimensional arrays
                     flat = v.flatten()
                     for i, vi in enumerate(flat):
-                        rr.log(f"{key}_{i}", rr.Scalars(float(vi)))
+                        rr.log(f"{key}_{i}", rr.Scalar(float(vi)))

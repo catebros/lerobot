@@ -64,7 +64,7 @@ _RESET_REST_KEY = "r"
 _RESET_HOME_KEY = "0"
 _STEP_INCREASE_KEY = "+"
 _STEP_DECREASE_KEY = "-"
-_QUIT_KEYS = {"q", "\x1b"}  # q or ESC
+_QUIT_KEYS = {"q"}  # ESC intentionally excluded: arrow keys produce \x1b[C/D/A/B which would trigger it
 
 
 class W250KeyboardTeleop(Teleoperator):
@@ -233,18 +233,31 @@ class W250KeyboardTeleop(Teleoperator):
     # ── Internal ───────────────────────────────────────────────────────────
 
     def _read_keys(self) -> None:
-        """Background thread: reads chars from stdin and updates _positions."""
+        """Background thread: reads chars from stdin and updates _positions.
+
+        Arrow keys produce a 3-byte escape sequence (\x1b [ C/D/A/B).  None
+        of those bytes appear in _KEY_MAP or _QUIT_KEYS, so they are silently
+        ignored — pressing the right-arrow key to advance to the next episode
+        (handled by pynput in init_keyboard_listener) no longer kills this
+        thread.  Only 'q' quits the teleop reader.
+        """
+        _exit_reason = "disconnected"
         while self._is_connected:
             try:
                 ch = sys.stdin.read(1)
-            except Exception:
+            except Exception as e:
+                _exit_reason = f"exception: {e!r}"
                 break
 
             if not ch:
+                # stdin returned empty — non-blocking flicker or transient EOF;
+                # keep spinning rather than killing the thread.
                 continue
 
-            # Quit
+            # Quit (q only — ESC is NOT a quit key here because arrow keys
+            # produce \x1b[A/B/C/D which would trigger it by accident)
             if ch in _QUIT_KEYS:
+                _exit_reason = "q key"
                 self._quit_requested = True
                 self._is_connected = False
                 break
@@ -338,7 +351,7 @@ class W250KeyboardTeleop(Teleoperator):
             "║  + / -   → Step size up / down          ║\n"
             "║  P       → Save current pose            ║\n"
             "║  F       → Replay saved pose + error    ║\n"
-            "║  Q / ESC → Quit                         ║\n"
+            "║  Q       → Quit                         ║\n"
             "╚══════════════════════════════════════════╝\n"
         )
         sys.stdout.write(controls)
