@@ -1,0 +1,3302 @@
+[
+  {
+    "waypoint": "rest",
+    "step": 0,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.40336120918874574,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 1,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6026710469304438,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7300483819358465,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 2,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.6977248763997408
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 3,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7300483819358465,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 4,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.6977248763997408
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 5,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 6,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 7,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 8,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 9,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6026710469304438,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 10,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.40336120918874574,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 11,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7300483819358465,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 12,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 13,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 14,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 15,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 16,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 17,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 18,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 19,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.40336120918874574,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 20,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 21,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.40336120918874574,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 22,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 23,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 24,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 25,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49707188865117224,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 26,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6026710469304438,
+      "elbow.pos": 0.40336120918874574,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 27,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 28,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "rest",
+    "step": 29,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 0,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4041787987241079,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 1,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.48437653798321945,
+      "shoulder.pos": -0.5773331994780382,
+      "elbow.pos": 0.3853742870632595,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7008828616740597,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 2,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4370131245535225,
+      "shoulder.pos": -0.5124049923020386,
+      "elbow.pos": 0.29871005046143795,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.6244219875856565,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.6977248763997408
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 3,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.3642589718423044,
+      "shoulder.pos": -0.414220871882238,
+      "elbow.pos": 0.18015989743025407,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.515642557395565,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 4,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.29980565014765026,
+      "shoulder.pos": -0.2946579522890378,
+      "elbow.pos": 0.10657704574174542,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.39819227864574436,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.6977248763997408
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 5,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.25097736521281067,
+      "shoulder.pos": -0.18776394103873206,
+      "elbow.pos": 0.10412428110669913,
+      "forearm_roll.pos": 0.0014648483820332014,
+      "wrist_angle.pos": 0.31306055599761207,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 6,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.1914068663197983,
+      "shoulder.pos": -0.05632390160638967,
+      "elbow.pos": 0.10494187064206129,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.207434161647422,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 7,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.1279300940072261,
+      "shoulder.pos": 0.0640308295655252,
+      "elbow.pos": 0.10657704574174542,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.09865471614300514,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 8,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.06103535142534744,
+      "shoulder.pos": 0.1653821809168765,
+      "elbow.pos": 0.10657704574174542,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": -0.00697168586434771,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 9,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.011718787056264945,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10902980640575177,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": -0.09446818634955145,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 10,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.018554746567686298,
+      "shoulder.pos": 0.24139570789078513,
+      "elbow.pos": 0.11393532971928422,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": -0.16462303757256425,
+      "wrist_rotate.pos": 0.000976565612726299,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 11,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.0224610081292409,
+      "shoulder.pos": 0.2390202789233813,
+      "elbow.pos": 0.11230015461960008,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": -0.18590597206317871,
+      "wrist_rotate.pos": 0.0004882828063630384,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 12,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.01318363603119832,
+      "shoulder.pos": 0.2231841165739734,
+      "elbow.pos": 0.10984739197007376,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": -0.19536504895423223,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 13,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.005371111129388151,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10657704574174542,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 14,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.01318363603119832,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.6977248763997408
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 15,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.009277373283843149,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 16,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.0014648483820330904,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 17,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.004394545146099382,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 18,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.003417979755710676,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 19,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0014648483820332014,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 20,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.002929696764066181,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 21,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0024414140688719943,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 22,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 23,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.0014648483820330904,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 24,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.0014648483820330904,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 25,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": -0.0004882828063631495,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 26,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 27,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 28,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "reach",
+    "step": 29,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 0,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.696658681422541
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 1,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.7178111329534469
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 2,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.7447300796564402
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 3,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.8874496710124293
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 4,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.940665440961538
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 5,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.9900226569607619
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 6,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 7,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 8,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 9,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 10,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 11,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.9671486980470717
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 12,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.911519617399154
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 13,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.8539821722006063
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 14,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.7797997919002116
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 15,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.6966587660882265
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 16,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.6168108967785172
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 17,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.5240143421977883
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 18,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.19694156687418296,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.4328657205191649
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 19,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.34142373224036704
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 20,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.2646697164093232
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 21,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.18494867629645706
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 22,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.11062219499938215
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 23,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0537022166450113
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 24,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 25,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 26,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 27,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 28,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "close_gripper",
+    "step": 29,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": 0.2,
+      "elbow.pos": 0.1,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": 0.2208087029898782,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 0,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.22160051264567948,
+      "elbow.pos": 0.10739463130606741,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.1961533079142076,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 1,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.20022171347228013,
+      "elbow.pos": 0.13601018463018089,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": -0.16383477861258888,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 2,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.14875422429497598,
+      "elbow.pos": 0.22921513056557963,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": -0.08027956622724453,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 3,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": 0.07194890304857493,
+      "elbow.pos": 0.3036155717894504,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.026135090911502123,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 4,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.017525338078202002,
+      "elbow.pos": 0.30933868265282527,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.12782022109046642,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 5,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.3085210931174629,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.19009249515661475,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 6,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.10462415792922941,
+      "elbow.pos": 0.2995276399968003,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.1956103078764424,
+      "wrist_rotate.pos": 0.0004882828063630384,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 7,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.09591427479037862,
+      "elbow.pos": 0.3060683245113762,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 8,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08482897037577819,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 9,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08245354910002878,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 10,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 11,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 12,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 13,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 14,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 15,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 16,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 17,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 18,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.3085210931174629,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 19,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 20,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 21,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 22,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 23,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 24,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 25,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 26,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 27,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08720439165152771,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 28,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "lift",
+    "step": 29,
+    "action": {
+      "waist.pos": 0.0,
+      "shoulder.pos": -0.1,
+      "elbow.pos": 0.3,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.2,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    },
+    "observed_position": {
+      "waist.pos": 0.000976565612726299,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 0,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.0004882828063630384,
+      "shoulder.pos": -0.08641258584155354,
+      "elbow.pos": 0.30770350358210075,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.20270460788756983,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 1,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.011718787056264945,
+      "shoulder.pos": -0.10699957920497893,
+      "elbow.pos": 0.3273256047783115,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.22477579750957832,
+      "wrist_rotate.pos": 0.000976565612726299,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 2,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.056152523880503846,
+      "shoulder.pos": -0.17034417476103025,
+      "elbow.pos": 0.40663156733019457,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": 0.3264609276885424,
+      "wrist_rotate.pos": 0.0004882828063630384,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 3,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.13476605351864768,
+      "shoulder.pos": -0.26377745262933205,
+      "elbow.pos": 0.41153707277404616,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.4242047630676298,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 4,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.2031256486328612,
+      "shoulder.pos": -0.38096495863843693,
+      "elbow.pos": 0.4107194832386838,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.5172190753155157,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 5,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.2646492842356536,
+      "shoulder.pos": -0.5211148677492352,
+      "elbow.pos": 0.40663156733019457,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.6252102465456317,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 6,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.3247080673061109,
+      "shoulder.pos": -0.6105890819552222,
+      "elbow.pos": 0.4017260301180212,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.707977192313838,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.04381385724120843
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 7,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.3867199681135405,
+      "shoulder.pos": -0.6216744171364396,
+      "elbow.pos": 0.4017260301180212,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.7276836050559203,
+      "wrist_rotate.pos": 0.000976565612726299,
+      "gripper.pos": 0.0979067636918489
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 8,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4555678474051992,
+      "shoulder.pos": -0.6192989881690358,
+      "elbow.pos": 0.40254361965338337,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.16330135383394376
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 9,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49609532029628234,
+      "shoulder.pos": -0.5995038083072388,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0014648483820332014,
+      "wrist_angle.pos": 0.7300483819358465,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.24108795236505337
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 10,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.5000015937158417,
+      "shoulder.pos": -0.6026710469304438,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": -0.0004882828063631495,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0004882828063630384,
+      "gripper.pos": 0.32402383322113015
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 11,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49804845700606215,
+      "shoulder.pos": -0.6058382855536488,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": -0.000976565612726299,
+      "gripper.pos": 0.39792529277711536
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 12,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4975601728286172,
+      "shoulder.pos": -0.6066300952094501,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0004882828063630384,
+      "gripper.pos": 0.4874825382315311
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 13,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.5004898778932867,
+      "shoulder.pos": -0.6058382855536488,
+      "elbow.pos": 0.40908432005212036,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.5751924630945452
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 14,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49804845700606215,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0004882828063630384,
+      "gripper.pos": 0.6555486651798526
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 15,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": -0.0004882828063631495,
+      "gripper.pos": 0.7416597632383372
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 16,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4985367411835071,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.8217169261225432
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 17,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6034628565862451,
+      "elbow.pos": 0.40908432005212036,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.8809676661323839
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 18,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.9446626773042327
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 19,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4985367411835071,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.9915137890133658
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 20,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.40908432005212036,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 21,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 22,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4985367411835071,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 23,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4985367411835071,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 24,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 25,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.9623769400136422
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 26,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.9031729354621842
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 27,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.4985367411835071,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.8434431570039201
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 28,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.000976565612726299,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.7659430671524614
+    }
+  },
+  {
+    "waypoint": "back_rest",
+    "step": 29,
+    "action": {
+      "waist.pos": 0.5,
+      "shoulder.pos": -0.6,
+      "elbow.pos": 0.4,
+      "forearm_roll.pos": 0.0,
+      "wrist_angle.pos": 0.73,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 1.0
+    },
+    "observed_position": {
+      "waist.pos": 0.49902502536095206,
+      "shoulder.pos": -0.6042546662420463,
+      "elbow.pos": 0.4082667305167582,
+      "forearm_roll.pos": 0.0004882828063630384,
+      "wrist_angle.pos": 0.7308366408958218,
+      "wrist_rotate.pos": 0.0,
+      "gripper.pos": 0.6987901400544002
+    }
+  }
+]

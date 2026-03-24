@@ -255,7 +255,8 @@ class W250Interbotix(Robot):
             # adding robot_node to a second executor causes a conflict and silently breaks
             # joint-state updates. A separate listener node avoids all conflicts.
             js_topic = f"/{self.config.robot_name}/joint_states"
-            arm_joints = self._joint_names  # waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate
+            # Include left_finger so the gripper encoder is read from the topic too
+            arm_joints = self._joint_names + ["left_finger"]
             self._js_listener = _JointStateListener(js_topic, arm_joints)
             self._ros_executor = MultiThreadedExecutor()
             self._ros_executor.add_node(self._js_listener)
@@ -381,20 +382,21 @@ class W250Interbotix(Robot):
                     self._current_positions[f"{joint_name}.pos"] = normalized_pos
                 
                 # Get gripper position (0=closed, 1=open for LeRobot compatibility)
-                # Use get_finger_position() — returns left_finger joint in METERS (linear)
-                # Limits come directly from gripper_info to avoid hardcoded values
+                # Prefer left_finger from the ROS topic (real encoder value).
+                # Fall back to get_finger_position() if the topic hasn't published yet.
                 try:
-                    if hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'get_finger_position'):
-                        finger_pos = self.bot.gripper.get_finger_position()  # meters
-                        gripper_min = self.bot.gripper.left_finger_lower_limit
-                        gripper_max = self.bot.gripper.left_finger_upper_limit
-                        gripper_pos = (finger_pos - gripper_min) / (gripper_max - gripper_min)
-                        gripper_pos = max(0.0, min(1.0, gripper_pos))  # Clamp to [0, 1]
+                    gripper_min = self.bot.gripper.left_finger_lower_limit
+                    gripper_max = self.bot.gripper.left_finger_upper_limit
+                    if listener_data is not None and "left_finger" in listener_data:
+                        finger_pos = listener_data["left_finger"]  # radians from topic
+                    elif hasattr(self.bot, 'gripper') and hasattr(self.bot.gripper, 'get_finger_position'):
+                        finger_pos = self.bot.gripper.get_finger_position()  # meters (stale fallback)
                     else:
-                        gripper_pos = 0.0
+                        finger_pos = gripper_min
+                    gripper_pos = (finger_pos - gripper_min) / (gripper_max - gripper_min)
+                    gripper_pos = max(0.0, min(1.0, gripper_pos))
                     self._current_positions["gripper.pos"] = gripper_pos
                 except Exception as e:
-                    # Fallback if gripper state unavailable
                     logger.debug(f"Could not read gripper position: {e}")
                     self._current_positions["gripper.pos"] = 0.0
                     
