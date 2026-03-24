@@ -18,9 +18,12 @@ import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cached_property
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import numpy as np
+import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
 
 # Import Interbotix API
 from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
@@ -36,6 +39,33 @@ from .config_w250_interbotix import W250InterbotixConfig
 from .constants import W250_REST_POSITION
 
 logger = logging.getLogger(__name__)
+
+
+class _JointStateListener(Node):
+    """Dedicated ROS2 node that subscribes to joint_states on its own executor.
+
+    Completely independent from the Interbotix robot node so there is no
+    executor conflict. Provides fresh encoder readings via latest_positions.
+    """
+
+    def __init__(self, topic: str, joint_names: List[str]):
+        super().__init__("lerobot_joint_state_listener")
+        self._joint_names = joint_names
+        self._lock = threading.Lock()
+        self._latest: Optional[Dict[str, float]] = None  # raw radians keyed by joint name
+        self.create_subscription(JointState, topic, self._cb, 10)
+        logger.info(f"JointStateListener subscribed to {topic}")
+
+    def _cb(self, msg: JointState) -> None:
+        name_to_pos = dict(zip(msg.name, msg.position))
+        with self._lock:
+            self._latest = {n: name_to_pos[n] for n in self._joint_names if n in name_to_pos}
+
+    @property
+    def latest_positions(self) -> Optional[Dict[str, float]]:
+        with self._lock:
+            return dict(self._latest) if self._latest is not None else None
+
 
 # This is basically: LeRobot (framework IA)  <-->  W250Interbotix  <-->  ROS2 / Interbotix API  <-->  Robot físico
 
@@ -59,6 +89,8 @@ class W250Interbotix(Robot):
         self._current_positions: Dict[str, float] = {}
         self._ros_executor: Optional[MultiThreadedExecutor] = None
         self._ros_spin_thread: Optional[threading.Thread] = None
+        # Dedicated joint-state listener (own node + executor, no conflict with Interbotix)
+        self._js_listener: Optional[_JointStateListener] = None
         
         # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
         # WidowX 250 6DOF has 6 joints (waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate)
@@ -218,17 +250,20 @@ class W250Interbotix(Robot):
             # auto-stops the gripper when the finger reaches its physical limits.
             # It only acts when gripper_moving=True, which we control explicitly in send_action.
 
-            # Start a background executor so joint-state callbacks fire continuously.
-            # InterbotixManipulatorXS does NOT spin its node after __init__, so without
-            # this the joint_states subscriber never processes new messages and
-            # get_joint_positions() always returns the initial REST position.
+            # Start a dedicated joint-state listener on its own independent ROS2 node.
+            # The Interbotix API owns robot_node and manages its own executor internally;
+            # adding robot_node to a second executor causes a conflict and silently breaks
+            # joint-state updates. A separate listener node avoids all conflicts.
+            js_topic = f"/{self.config.robot_name}/joint_states"
+            arm_joints = self._joint_names  # waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate
+            self._js_listener = _JointStateListener(js_topic, arm_joints)
             self._ros_executor = MultiThreadedExecutor()
-            self._ros_executor.add_node(self.bot.core.robot_node)
+            self._ros_executor.add_node(self._js_listener)
             self._ros_spin_thread = threading.Thread(
                 target=self._ros_executor.spin, daemon=True
             )
             self._ros_spin_thread.start()
-            logger.info("ROS2 background executor started for joint-state updates")
+            logger.info(f"JointStateListener executor started on {js_topic}")
 
             # Read initial positions
             self._update_positions()
@@ -327,17 +362,23 @@ class W250Interbotix(Robot):
         """Update current joint positions from robot"""
         if not self.bot:
             return
-            
+
         try:
-            # Get actual joint positions from joint state feedback (not commanded positions)
-            joint_positions = self.bot.arm.get_joint_positions()
-            
+            # Prefer the dedicated listener which reads fresh encoder values from the
+            # joint_states topic. Fall back to get_joint_positions() (returns stale
+            # commanded positions when no executor is spinning the Interbotix node).
+            listener_data = self._js_listener.latest_positions if self._js_listener else None
+
             with self._state_lock:
                 # Update arm joints
                 for i, joint_name in enumerate(self._joint_names):
-                    if i < len(joint_positions):
-                        normalized_pos = self._normalize_position(joint_name, joint_positions[i])
-                        self._current_positions[f"{joint_name}.pos"] = normalized_pos
+                    if listener_data is not None and joint_name in listener_data:
+                        raw_rad = listener_data[joint_name]
+                        normalized_pos = self._normalize_position(joint_name, raw_rad)
+                    else:
+                        joint_positions = self.bot.arm.get_joint_positions()
+                        normalized_pos = self._normalize_position(joint_name, joint_positions[i]) if i < len(joint_positions) else 0.0
+                    self._current_positions[f"{joint_name}.pos"] = normalized_pos
                 
                 # Get gripper position (0=closed, 1=open for LeRobot compatibility)
                 # Use get_finger_position() — returns left_finger joint in METERS (linear)
@@ -698,21 +739,28 @@ class W250Interbotix(Robot):
         """Stop the Interbotix executor thread, destroy the node, and shut down rclpy."""
         import rclpy
 
-        # 0. Shut down the background executor we started in connect()
+        # 0. Shut down the dedicated joint-state listener executor
         if self._ros_executor is not None:
             try:
                 self._ros_executor.shutdown(timeout_sec=2.0)
-                logger.debug("Background ROS2 executor shutdown")
+                logger.debug("JointStateListener executor shutdown")
             except Exception as e:
-                logger.debug(f"background executor.shutdown: {e}")
+                logger.debug(f"JointStateListener executor.shutdown: {e}")
             self._ros_executor = None
         if self._ros_spin_thread is not None and self._ros_spin_thread.is_alive():
             try:
                 self._ros_spin_thread.join(timeout=2.0)
-                logger.debug("Background ROS2 spin thread joined")
+                logger.debug("JointStateListener spin thread joined")
             except Exception as e:
-                logger.debug(f"background spin_thread.join: {e}")
+                logger.debug(f"JointStateListener spin_thread.join: {e}")
             self._ros_spin_thread = None
+        if self._js_listener is not None:
+            try:
+                self._js_listener.destroy_node()
+                logger.debug("JointStateListener node destroyed")
+            except Exception as e:
+                logger.debug(f"JointStateListener destroy_node: {e}")
+            self._js_listener = None
 
         core = getattr(self.bot, "core", None)
         if core is None:
