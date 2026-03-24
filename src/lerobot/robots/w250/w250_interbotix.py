@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cached_property
 from typing import Any, Dict, Optional
 import numpy as np
+from rclpy.executors import MultiThreadedExecutor
 
 # Import Interbotix API
 from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
@@ -56,6 +57,8 @@ class W250Interbotix(Robot):
         # State tracking
         self._is_connected = False
         self._current_positions: Dict[str, float] = {}
+        self._ros_executor: Optional[MultiThreadedExecutor] = None
+        self._ros_spin_thread: Optional[threading.Thread] = None
         
         # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
         # WidowX 250 6DOF has 6 joints (waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate)
@@ -214,6 +217,18 @@ class W250Interbotix(Robot):
             # Keep tmr_gripper_state ENABLED — it is the hardware safety mechanism that
             # auto-stops the gripper when the finger reaches its physical limits.
             # It only acts when gripper_moving=True, which we control explicitly in send_action.
+
+            # Start a background executor so joint-state callbacks fire continuously.
+            # InterbotixManipulatorXS does NOT spin its node after __init__, so without
+            # this the joint_states subscriber never processes new messages and
+            # get_joint_positions() always returns the initial REST position.
+            self._ros_executor = MultiThreadedExecutor()
+            self._ros_executor.add_node(self.bot.core.robot_node)
+            self._ros_spin_thread = threading.Thread(
+                target=self._ros_executor.spin, daemon=True
+            )
+            self._ros_spin_thread.start()
+            logger.info("ROS2 background executor started for joint-state updates")
 
             # Read initial positions
             self._update_positions()
@@ -682,6 +697,22 @@ class W250Interbotix(Robot):
     def _shutdown_ros2(self) -> None:
         """Stop the Interbotix executor thread, destroy the node, and shut down rclpy."""
         import rclpy
+
+        # 0. Shut down the background executor we started in connect()
+        if self._ros_executor is not None:
+            try:
+                self._ros_executor.shutdown(timeout_sec=2.0)
+                logger.debug("Background ROS2 executor shutdown")
+            except Exception as e:
+                logger.debug(f"background executor.shutdown: {e}")
+            self._ros_executor = None
+        if self._ros_spin_thread is not None and self._ros_spin_thread.is_alive():
+            try:
+                self._ros_spin_thread.join(timeout=2.0)
+                logger.debug("Background ROS2 spin thread joined")
+            except Exception as e:
+                logger.debug(f"background spin_thread.join: {e}")
+            self._ros_spin_thread = None
 
         core = getattr(self.bot, "core", None)
         if core is None:

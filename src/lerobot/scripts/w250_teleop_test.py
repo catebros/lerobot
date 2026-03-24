@@ -129,7 +129,7 @@ def save_pose(obs: dict[str, float]) -> None:
     sys.stdout.flush()
 
 
-def replay_pose(robot, path: Path) -> None:
+def replay_pose(robot, path: Path) -> None: 
     """
     Load saved pose and send it as an action. Then read back the observation
     and print per-joint error so we can verify round-trip accuracy.
