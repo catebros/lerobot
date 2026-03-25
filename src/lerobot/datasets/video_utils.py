@@ -550,6 +550,7 @@ def concatenate_video_files(
             stream_map[input_stream.index].time_base = input_stream.time_base
 
     # Demux + remux packets (no re-encode)
+    last_dts: dict[int, int] = {}
     for packet in input_container.demux():
         # Skip packets from un-mapped streams
         if packet.stream.index not in stream_map:
@@ -558,6 +559,15 @@ def concatenate_video_files(
         # Skip demux flushing packets
         if packet.dts is None:
             continue
+
+        # Ensure monotonically increasing DTS (can collide at file boundaries)
+        stream_idx = packet.stream.index
+        if stream_idx in last_dts and packet.dts <= last_dts[stream_idx]:
+            delta = last_dts[stream_idx] + 1 - packet.dts
+            packet.dts += delta
+            if packet.pts is not None:
+                packet.pts = max(packet.pts + delta, packet.dts)
+        last_dts[stream_idx] = packet.dts
 
         output_stream = stream_map[packet.stream.index]
         packet.stream = output_stream

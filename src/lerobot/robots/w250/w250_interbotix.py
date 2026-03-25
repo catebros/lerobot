@@ -689,42 +689,32 @@ class W250Interbotix(Robot):
 
                 try:
                     max_effort = abs(self.bot.gripper.gripper_value)
-                    finger_pos = self.bot.gripper.get_finger_position()
-                    lower = self.bot.gripper.left_finger_lower_limit
-                    upper = self.bot.gripper.left_finger_upper_limit
-                    finger_norm = (finger_pos - lower) / (upper - lower) if upper > lower else 0.5
+
+                    # Use the ROS-topic-based gripper position (same source as observation)
+                    # so that position-replay commands and delta calculation are consistent.
+                    with self._state_lock:
+                        finger_norm = self._current_positions.get("gripper.pos", 0.5)
 
                     delta = gripper_cmd - finger_norm
 
-                    if delta > 0.001 and finger_pos < upper:
-                        # Target is more open than current and not at limit → open motor
+                    if delta > 0.05:
+                        # Target is more open than current → open motor
                         self.bot.gripper.gripper_command.cmd = max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = True
                         logger.debug(f"Gripper OPEN  effort=+{max_effort:.0f}  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
-                    elif delta < -0.001 and finger_pos > lower:
-                        # Target is more closed than current and not at limit → close motor
+                    elif delta < -0.05:
+                        # Target is more closed than current → close motor
                         self.bot.gripper.gripper_command.cmd = -max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = True
                         logger.debug(f"Gripper CLOSE effort={-max_effort:.0f}  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
-                    elif delta > 0.001 and finger_pos >= upper:
-                        # Already at upper limit
-                        self.bot.gripper.gripper_command.cmd = 0.0
-                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
-                        self.bot.gripper.gripper_moving = False
-                        logger.debug(f"Gripper OPEN  blocked — already at upper_limit ({finger_pos:.4f} >= {upper:.4f})")
-                    elif delta < -0.001 and finger_pos <= lower:
-                        # Already at lower limit
-                        self.bot.gripper.gripper_command.cmd = 0.0
-                        self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
-                        self.bot.gripper.gripper_moving = False
-                        logger.debug(f"Gripper CLOSE blocked — already at lower_limit ({finger_pos:.4f} <= {lower:.4f})")
                     else:
                         # At target → stop motor
                         self.bot.gripper.gripper_command.cmd = 0.0
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = False
+                        logger.debug(f"Gripper HOLD  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
                 except Exception as e:
                     logger.warning(f"Failed to command gripper: {e}")
             
