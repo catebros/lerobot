@@ -76,6 +76,10 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .w250.w250_interbotix import W250Interbotix
 
         return W250Interbotix(config)
+    elif config.type == "v300_interbotix":
+        from .v300.v300_interbotix import V300Interbotix
+
+        return V300Interbotix(config)
     else:
         try:
             return cast(Robot, make_device_from_device_class(config))
