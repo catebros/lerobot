@@ -177,3 +177,6 @@ outputs/
 *.urdf
 *.xml
 *.part
+
+# Local datasets (too large for GitHub)
+/datasets/

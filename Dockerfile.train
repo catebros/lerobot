@@ -1,0 +1,23 @@
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3.10 python3-pip python3.10-venv \
+    git ffmpeg libgl1-mesa-glx libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install --upgrade pip
+
+# PyTorch for CUDA 12.4 (compatible with driver CUDA 12.8)
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+# Clone lerobot from the correct branch
+RUN git clone -b feat/basic-case https://github.com/catebros/lerobot.git /lerobot
+
+WORKDIR /lerobot
+
+# Install lerobot with ACT extras
+RUN pip install -e ".[act]"
+
+WORKDIR /

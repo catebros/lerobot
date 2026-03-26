@@ -526,55 +526,48 @@ def concatenate_video_files(
         tmp_concatenate_file.flush()
         tmp_concatenate_path = tmp_concatenate_file.name
 
-    # Create input and output containers
-    input_container = av.open(
-        tmp_concatenate_path, mode="r", format="concat", options={"safe": "0"}
-    )  # safe = 0 allows absolute paths as well as relative paths
-
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_named_file:
         tmp_output_video_path = tmp_named_file.name
 
-    output_container = av.open(
-        tmp_output_video_path, mode="w", options={"movflags": "faststart"}
-    )  # faststart is to move the metadata to the beginning of the file to speed up loading
+    # Use ffmpeg subprocess for concatenation — PyAV's manual DTS adjustment mishandles
+    # codecs like libsvtav1 that use negative starting DTS (encoder lookahead delay),
+    # causing PTS offsets to accumulate incorrectly at file boundaries.
+    # If input codecs are mixed, re-encode to h264 to ensure a consistent, seekable output.
+    import subprocess
 
-    # Replicate input streams in output container
-    stream_map = {}
-    for input_stream in input_container.streams:
-        if input_stream.type in ("video", "audio", "subtitle"):  # only copy compatible streams
-            stream_map[input_stream.index] = output_container.add_stream_from_template(
-                template=input_stream, opaque=True
-            )
+    def _get_codec(path: Path) -> str:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=codec_name", "-of", "csv=p=0", str(path)],
+            capture_output=True, text=True,
+        )
+        return result.stdout.strip()
 
-            # set the time base to the input stream time base (missing in the codec context)
-            stream_map[input_stream.index].time_base = input_stream.time_base
+    codecs = [_get_codec(Path(p)) for p in input_video_paths]
+    all_same_codec = len(set(codecs)) == 1
 
-    # Demux + remux packets (no re-encode)
-    last_dts: dict[int, int] = {}
-    for packet in input_container.demux():
-        # Skip packets from un-mapped streams
-        if packet.stream.index not in stream_map:
-            continue
+    if all_same_codec:
+        video_codec_args = ["-c", "copy"]
+    else:
+        logger.warning(
+            f"Mixed codecs detected during concatenation ({set(codecs)}). Re-encoding to h264."
+        )
+        video_codec_args = ["-c:v", "libx264", "-crf", "18", "-preset", "fast"]
 
-        # Skip demux flushing packets
-        if packet.dts is None:
-            continue
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "concat", "-safe", "0",
+        "-i", tmp_concatenate_path,
+        *video_codec_args,
+        "-movflags", "+faststart",
+        tmp_output_video_path,
+    ]
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ffmpeg concatenation failed:\n{result.stderr.decode()}"
+        )
 
-        # Ensure monotonically increasing DTS (can collide at file boundaries)
-        stream_idx = packet.stream.index
-        if stream_idx in last_dts and packet.dts <= last_dts[stream_idx]:
-            delta = last_dts[stream_idx] + 1 - packet.dts
-            packet.dts += delta
-            if packet.pts is not None:
-                packet.pts = max(packet.pts + delta, packet.dts)
-        last_dts[stream_idx] = packet.dts
-
-        output_stream = stream_map[packet.stream.index]
-        packet.stream = output_stream
-        output_container.mux(packet)
-
-    input_container.close()
-    output_container.close()
     shutil.move(tmp_output_video_path, output_video_path)
     Path(tmp_concatenate_path).unlink()
 
