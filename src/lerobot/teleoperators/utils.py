@@ -103,6 +103,10 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> "Teleoperator":
         from .w250keyboard.w250keyboard import W250KeyboardTeleop
 
         return W250KeyboardTeleop(config)
+    elif config.type == "v300keyboard":
+        from .v300keyboard.v300keyboard import V300KeyboardTeleop
+
+        return V300KeyboardTeleop(config)
     elif config.type == "w250joystick":
         from .w250joystick.w250joystick import W250JoystickTeleop
 
