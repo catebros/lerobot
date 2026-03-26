@@ -665,7 +665,7 @@ class RTCEvaluator:
 
         # Save figure
         output_path = os.path.join(self.cfg.output_dir, "final_actions_comparison.png")
-        fig.tight_layout(rect=[0, 0, 0.85, 1])  # Leave space for legend on right
+        fig.tight_layout(rect=[0, 0, 0.85, 0.96])  # Leave space for legend on right and title on top
         fig.savefig(output_path, dpi=150, bbox_inches="tight")
         logging.info(f"Saved final actions comparison to {output_path}")
         plt.close(fig)
@@ -778,7 +778,7 @@ class RTCEvaluator:
             )
 
     def _save_figure(self, fig, path):
-        fig.tight_layout(rect=[0, 0, 0.85, 1])  # Leave space for legend/colorbar on right
+        fig.tight_layout(rect=[0, 0, 0.85, 0.96])  # Leave space for legend/colorbar on right and title on top
         fig.savefig(path, dpi=150, bbox_inches="tight")
         logging.info(f"Saved figure to {path}")
         plt.close(fig)
