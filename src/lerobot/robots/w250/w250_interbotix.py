@@ -42,11 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class _JointStateListener(Node):
-    """Dedicated ROS2 node that subscribes to joint_states on its own executor.
-
-    Completely independent from the Interbotix robot node so there is no
-    executor conflict. Provides fresh encoder readings via latest_positions.
-    """
+    """Dedicated ROS2 node that subscribes to joint_states on its own executor."""
 
     def __init__(self, topic: str, joint_names: List[str]):
         super().__init__("lerobot_joint_state_listener")
