@@ -27,7 +27,7 @@ from .constants import V300_REST_POSITION
 logger = logging.getLogger(__name__)
 
 
-class _JoinStateListener(Node):
+class _JointStateListener(Node):
     """Dedicated ROS2 node that subscribes to joint_states on its own executor."""
 
     def __init__(self, topic: str, joint_names: List[str]):
