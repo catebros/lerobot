@@ -54,11 +54,6 @@ _QUIT_KEYS = {"q"}
 class V300KeyboardTeleop(Teleoperator):
     """
     Keyboard teleoperator for ViperX-300 S 6DOF robot.
-
-    Maintains internal absolute joint positions and applies incremental
-    changes based on key presses. Compatible with V300Interbotix.send_action().
-
-    Uses termios raw mode — no GUI or DISPLAY required. Works in WSL terminal.
     """
 
     config_class = V300KeyboardConfig
@@ -84,13 +79,13 @@ class V300KeyboardTeleop(Teleoperator):
     @property
     def action_features(self) -> dict[str, type]:
         return {
-            "waist.pos":        float,
-            "shoulder.pos":     float,
-            "elbow.pos":        float,
+            "waist.pos": float,
+            "shoulder.pos": float,
+            "elbow.pos": float,
             "forearm_roll.pos": float,
-            "wrist_angle.pos":  float,
+            "wrist_angle.pos": float,
             "wrist_rotate.pos": float,
-            "gripper.pos":      float,
+            "gripper.pos": float,
         }
 
     @property
@@ -256,25 +251,11 @@ class V300KeyboardTeleop(Teleoperator):
 
     def _print_controls(self) -> None:
         controls = (
-            "\n"
-            "╔══════════════════════════════════════════╗\n"
-            "║      V300 Keyboard Teleoperator          ║\n"
-            "╠══════════════════════════════════════════╣\n"
-            "║  A / D   → Waist       (left / right)   ║\n"
-            "║  W / S   → Shoulder    (up / down)      ║\n"
-            "║  I / K   → Elbow       (up / down)      ║\n"
-            "║  J / L   → Forearm roll                 ║\n"
-            "║  U / O   → Wrist angle                  ║\n"
-            "║  T / Y   → Wrist rotate                 ║\n"
-            "║  G       → Gripper open                 ║\n"
-            "║  H       → Gripper close                ║\n"
-            "║  R       → Reset to REST position       ║\n"
-            "║  0       → Reset to HOME (all zeros)    ║\n"
-            "║  + / -   → Step size up / down          ║\n"
-            "║  P       → Save current pose            ║\n"
-            "║  F       → Replay saved pose + error    ║\n"
-            "║  Q       → Quit                         ║\n"
-            "╚══════════════════════════════════════════╝\n"
+            "\nV300 Keyboard Controls:\n"
+            "  A/D  waist    W/S  shoulder  I/K  elbow\n"
+            "  J/L  forearm  U/O  wrist angle  T/Y  wrist rotate\n"
+            "  G    gripper open   H  gripper close\n"
+            "  R    REST   0  HOME   +/-  step size   P  save   F  replay   Q  quit\n"
         )
         sys.stdout.write(controls)
         sys.stdout.flush()

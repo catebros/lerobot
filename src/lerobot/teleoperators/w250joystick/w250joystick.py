@@ -59,29 +59,23 @@ class GamepadController(Node):
         super().__init__(config.ros2_node_name)
         self.config = config
 
-        # Current state from ROS2
         self.axes = []
         self.buttons = []
         self.lock = threading.Lock()
 
-        # Episode control flags
         self.episode_end_status = None
-        self.intervention_flag = True  # Start with intervention enabled
+        self.intervention_flag = True
 
-        # One-shot flags for pose save (A) / replay (B), consumed by the main loop
         self._save_pose_requested = False
         self._replay_pose_requested = False
 
-        # Current joint positions (incremental control).
-        # Initialized to REST position so the first action after robot.connect()
-        # (which calibrates to REST) produces zero delta — no lurch on start.
-        # Call sync_with_robot() to update if the robot is somewhere else.
+        # Initialized to REST so the first action after robot.connect() (which calibrates
+        # to REST) produces zero delta — no lurch on start. Call sync_with_robot() to update.
         self.current_positions = dict(W250_REST_POSITION)
 
         # Previous button states for edge detection (debounce without sleep)
         self._prev_buttons: list = []
 
-        # Subscribe to joy topic
         self.subscription = self.create_subscription(Joy, config.joy_topic, self.joy_callback, 10)
 
         self.get_logger().info(
@@ -103,33 +97,27 @@ class GamepadController(Node):
         self.get_logger().info("  B: Replay saved pose + print round-trip error")
 
     def joy_callback(self, msg: Joy):
-        """Callback for Joy messages from ROS2."""
         with self.lock:
             self.axes = list(msg.axes)
             self.buttons = list(msg.buttons)
-        pass
 
     def get_axes_values(self):
-        """Get current joystick axes values."""
         with self.lock:
             return self.axes.copy() if self.axes else []
 
     def get_button_state(self, button_idx: int) -> bool:
-        """Get state of a specific button."""
         with self.lock:
             if self.buttons and 0 <= button_idx < len(self.buttons):
                 return bool(self.buttons[button_idx])
             return False
 
     def _apply_deadzone(self, value: float) -> float:
-        """Apply deadzone to analog input."""
         deadzone = self.config.deadzone
         return 0.0 if abs(value) < deadzone else value
 
     def _clamp_position(self, joint_name: str, position: float) -> float:
-        """Clamp joint position to valid range."""
         if joint_name == "gripper":
-            return max(0.0, min(1.0, position))  # [0,1] physical target for policy compatibility
+            return max(0.0, min(1.0, position))
         else:
             return max(-1.0, min(1.0, position))
 
@@ -141,83 +129,54 @@ class GamepadController(Node):
         if not axes or len(axes) < 4:
             return {joint: 0.0 for joint in self.current_positions.keys()}
 
-        # Left stick controls - Waist and Shoulder
-        # Left Stick X -> Waist (left/right rotation)
         left_stick_x = self._apply_deadzone(axes[self.config.left_stick_x_axis] if len(axes) > self.config.left_stick_x_axis else 0.0)
         increments["waist.pos"] = left_stick_x * self.config.y_step_size
 
-        # Left Stick Y -> Shoulder (up/down)
         left_stick_y = self._apply_deadzone(axes[self.config.left_stick_y_axis] if len(axes) > self.config.left_stick_y_axis else 0.0)
-        increments["shoulder.pos"] = -left_stick_y * self.config.x_step_size  # Inverted for intuitive control
+        increments["shoulder.pos"] = -left_stick_y * self.config.x_step_size  # inverted for intuitive control
 
-        # Right stick controls - Elbow and Wrist angle
-        # Right Stick Y -> Elbow (up/down)
         right_stick_y = self._apply_deadzone(axes[self.config.right_stick_y_axis] if len(axes) > self.config.right_stick_y_axis else 0.0)
-        increments["elbow.pos"] = -right_stick_y * self.config.z_step_size  # Inverted for intuitive control
+        increments["elbow.pos"] = -right_stick_y * self.config.z_step_size  # inverted for intuitive control
 
-        # Right Stick X -> Wrist angle
         right_stick_x = self._apply_deadzone(axes[self.config.right_stick_x_axis] if len(axes) > self.config.right_stick_x_axis else 0.0)
         increments["wrist_angle.pos"] = right_stick_x * self.config.wrist_step_size
 
-        # D-Pad controls - Forearm roll (Joint 6)
-        # D-Pad is typically represented as axis 6 (horizontal) and axis 7 (vertical)
         forearm_roll_increment = 0.0
         if len(axes) > self.config.dpad_x_axis:
             dpad_x = axes[self.config.dpad_x_axis]
-            # D-Pad returns -1 for left, +1 for right, 0 for neutral
-            if abs(dpad_x) > 0.5:  # Simple threshold for D-Pad
+            if abs(dpad_x) > 0.5:
                 forearm_roll_increment = dpad_x * self.config.forearm_step_size
         increments["forearm_roll.pos"] = forearm_roll_increment
 
-        # Triggers control - Wrist rotate (analog triggers on Logitech F710)
-        # On Logitech F710, LT/RT are analog axes (range -1 to 1, rest at 0)
-        wrist_rotate_increment = 0.0
         left_trigger = self._apply_deadzone(axes[self.config.left_trigger_axis] if len(axes) > self.config.left_trigger_axis else 0.0)
         right_trigger = self._apply_deadzone(axes[self.config.right_trigger_axis] if len(axes) > self.config.right_trigger_axis else 0.0)
-
-        # Triggers return negative values when pressed on Logitech F710
+        # Triggers return negative values when pressed on Logitech F710:
         # LT negative = rotate counter-clockwise, RT negative = rotate clockwise
-        wrist_rotate_increment = (right_trigger - left_trigger) * self.config.wrist_step_size
-        increments["wrist_rotate.pos"] = wrist_rotate_increment
+        increments["wrist_rotate.pos"] = (right_trigger - left_trigger) * self.config.wrist_step_size
 
-        # Gripper control - L1 opens, R1 closes
         if self.get_button_state(self.config.button_l1):
-            increments["gripper.pos"] = self.config.gripper_step_size  # Open (positive, towards 1.0)
+            increments["gripper.pos"] = self.config.gripper_step_size
         elif self.get_button_state(self.config.button_r1):
-            increments["gripper.pos"] = -self.config.gripper_step_size  # Close (negative, towards 0.0)
+            increments["gripper.pos"] = -self.config.gripper_step_size
         else:
-            increments["gripper.pos"] = 0.0  # No change
+            increments["gripper.pos"] = 0.0
 
         return increments
 
     def apply_increments(self, increments: Dict[str, float]) -> Dict[str, float]:
-        """Apply increments to current positions and return new positions."""
         new_positions = {}
-
         for joint, increment in increments.items():
             current_pos = self.current_positions.get(joint, 0.0)
-            new_pos = current_pos + increment
-            new_pos = self._clamp_position(joint.split('.')[0], new_pos)
-
+            new_pos = self._clamp_position(joint.split('.')[0], current_pos + increment)
             self.current_positions[joint] = new_pos
             new_positions[joint] = new_pos
-
         return new_positions
 
     def reset_to_home(self):
-        """Reset all joints to rest position (safe, tucked configuration)."""
-        # Use the standard W250 rest position defined in constants
-        # This is a safe, compact position for resetting between episodes
         self.current_positions.update(W250_REST_POSITION)
 
     def sync_positions(self, robot_positions: Dict[str, float]):
-        """
-        Sync joystick's internal position tracking with robot's actual positions.
-        This prevents unwanted movements when starting teleoperation.
-
-        Args:
-            robot_positions: Dictionary of joint positions from robot (e.g., from robot.get_observation())
-        """
+        """Sync internal position tracking with robot's actual positions to prevent unwanted movements."""
         for joint_key in self.current_positions:
             if joint_key in robot_positions:
                 self.current_positions[joint_key] = robot_positions[joint_key]
@@ -236,27 +195,22 @@ class GamepadController(Node):
         with self.lock:
             buttons = self.buttons.copy() if self.buttons else []
 
-        # Check intervention button (Select) - toggle only on rising edge
         if self._button_rising_edge(self.config.button_select):
             self.intervention_flag = not self.intervention_flag
 
-        # Check home button (Triangle/Y) - only on rising edge
         if self._button_rising_edge(self.config.button_triangle):
             self.reset_to_home()
 
-        # Check episode end buttons
         if self.get_button_state(self.config.button_start):
             self.episode_end_status = TeleopEvents.RERECORD_EPISODE
         else:
             self.episode_end_status = None
 
-        # Pose save (A) / replay (B) — one-shot on rising edge
         if self._button_rising_edge(self.config.button_a):
             self._save_pose_requested = True
         if self._button_rising_edge(self.config.button_b):
             self._replay_pose_requested = True
 
-        # Snapshot current buttons for next call's edge detection
         self._prev_buttons = buttons
 
     def consume_save_pose(self) -> bool:
@@ -308,12 +262,11 @@ class W250JoystickTeleop(Teleoperator):
 
     @property
     def action_features(self) -> dict:
-        """Define the structure of actions produced by this teleoperator (6DOF)."""
         return {
             "waist.pos": float,
             "shoulder.pos": float,
             "elbow.pos": float,
-            "forearm_roll.pos": float,  # Joint 6 - Forearm rotation
+            "forearm_roll.pos": float,
             "wrist_angle.pos": float,
             "wrist_rotate.pos": float,
             "gripper.pos": float,
@@ -324,15 +277,11 @@ class W250JoystickTeleop(Teleoperator):
         return {}
 
     def connect(self) -> None:
-        """Initialize ROS2 and start the gamepad controller node."""
-        # Initialize ROS2 if not already initialized
         if not rclpy.ok():
             rclpy.init()
 
-        # Create the gamepad controller node
         self.gamepad_node = GamepadController(self.config)
 
-        # Start spinning in a separate thread
         self.executor = rclpy.executors.SingleThreadedExecutor()
         self.executor.add_node(self.gamepad_node)
 
@@ -342,7 +291,6 @@ class W250JoystickTeleop(Teleoperator):
         logging.info("W250 Logitech F710 gamepad teleoperator connected and listening for joy messages")
 
     def _spin_ros(self):
-        """Spin ROS2 executor in a separate thread."""
         try:
             self.executor.spin()
         except Exception as e:
@@ -361,13 +309,7 @@ class W250JoystickTeleop(Teleoperator):
         return self.gamepad_node.consume_replay_pose()
 
     def sync_with_robot(self, robot_observation: dict[str, Any]) -> None:
-        """
-        Sync teleoperator's position tracking with the robot's actual current positions.
-        Call this after connecting and before starting teleoperation to prevent unwanted movements.
-
-        Args:
-            robot_observation: Observation dictionary from robot.get_observation()
-        """
+        """Sync position tracking with robot's actual state to prevent unwanted movements on start."""
         if self.gamepad_node is None:
             raise RuntimeError("Gamepad controller not connected. Call connect() first.")
 
@@ -375,33 +317,14 @@ class W250JoystickTeleop(Teleoperator):
         logging.info("Joystick positions synced with robot state")
 
     def get_action(self) -> dict[str, Any]:
-        """Get action from gamepad inputs - returns absolute joint positions."""
         if self.gamepad_node is None:
             raise RuntimeError("Gamepad controller not connected. Call connect() first.")
 
-        # Update the controller state
         self.gamepad_node.update_state()
-
-        # Get increments from gamepad input
         increments = self.gamepad_node.get_joint_increments()
-
-        # Apply increments to get new absolute positions
-        positions = self.gamepad_node.apply_increments(increments)
-
-        return positions
+        return self.gamepad_node.apply_increments(increments)
 
     def get_teleop_events(self) -> dict[str, Any]:
-        """
-        Get extra control events from the gamepad such as intervention status,
-        episode termination, success indicators, etc.
-
-        Returns:
-            Dictionary containing:
-                - is_intervention: bool - Whether human is currently intervening
-                - terminate_episode: bool - Whether to terminate the current episode
-                - success: bool - Whether the episode was successful
-                - rerecord_episode: bool - Whether to rerecord the episode
-        """
         if self.gamepad_node is None:
             return {
                 TeleopEvents.IS_INTERVENTION: False,
@@ -410,13 +333,9 @@ class W250JoystickTeleop(Teleoperator):
                 TeleopEvents.RERECORD_EPISODE: False,
             }
 
-        # Update state
         self.gamepad_node.update_state()
 
-        # Check if intervention is active
         is_intervention = self.gamepad_node.intervention_flag
-
-        # Get episode end status
         episode_end_status = self.gamepad_node.episode_end_status
         terminate_episode = episode_end_status in [
             TeleopEvents.RERECORD_EPISODE,
@@ -433,7 +352,6 @@ class W250JoystickTeleop(Teleoperator):
         }
 
     def disconnect(self) -> None:
-        """Disconnect from the gamepad controller and cleanup ROS2."""
         if self.executor is not None:
             self.executor.shutdown()
 
@@ -449,25 +367,17 @@ class W250JoystickTeleop(Teleoperator):
 
     @property
     def is_connected(self) -> bool:
-        """Check if gamepad controller is connected."""
         return self.gamepad_node is not None
 
     def calibrate(self) -> None:
-        """Calibrate the gamepad controller."""
-        # No calibration needed for gamepad with ROS2
         pass
 
     @property
     def is_calibrated(self) -> bool:
-        """Check if gamepad controller is calibrated."""
         return True
 
     def configure(self) -> None:
-        """Configure the gamepad controller."""
-        # No additional configuration needed
         pass
 
     def send_feedback(self, feedback: dict) -> None:
-        """Send feedback to the gamepad controller."""
-        # PS3 doesn't support feedback in this implementation
         pass

@@ -47,7 +47,6 @@ import sys
 import time
 from pathlib import Path
 
-# ── Setup logging ─────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -55,33 +54,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger("w250_joystick_test")
 
-# ── Imports ───────────────────────────────────────────────────────────────────
 from lerobot.robots.w250.config_w250_interbotix import W250InterbotixConfig
 from lerobot.robots.w250.w250_interbotix import W250Interbotix
 from lerobot.teleoperators.w250joystick import W250JoystickConfig, W250JoystickTeleop
 
-
-# ── Configuration ─────────────────────────────────────────────────────────────
-
 ROBOT_MODEL = "wx250s"
-ROBOT_NAME  = "wx250s"
+ROBOT_NAME = "wx250s"
 
-# Frequency — single value, all timing derived from it.
-# Must match: dataset fps, camera fps, W250InterbotixConfig.fps.
-FPS        = 15
+FPS = 15
 DISPLAY_HZ = 4.0
 
-CONTROL_HZ  = float(FPS)
-MOVING_TIME = 1.0 / FPS       # auto-derived: robot completes each move in one period
-ACCEL_TIME  = MOVING_TIME / 4
+CONTROL_HZ = float(FPS)
+MOVING_TIME = 1.0 / FPS
+ACCEL_TIME = MOVING_TIME / 4
 
 CALIBRATE_ON_CONNECT = True
 
 GRIPPER_LOG_PATH = Path("/tmp/gripper_log_joystick.csv")
-POSE_LOG_PATH    = Path("/tmp/saved_pose.json")
+POSE_LOG_PATH = Path("/tmp/saved_pose.json")
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def format_state(obs: dict) -> str:
     keys = [
@@ -143,8 +134,6 @@ def replay_pose(robot, path: Path) -> None:
     sys.stdout.flush()
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-
 def main() -> None:
     robot_cfg = W250InterbotixConfig(
         robot_model=ROBOT_MODEL,
@@ -163,7 +152,7 @@ def main() -> None:
         gripper_step_size=0.15,
     )
 
-    robot  = W250Interbotix(robot_cfg)
+    robot = W250Interbotix(robot_cfg)
     teleop = W250JoystickTeleop(teleop_cfg)
 
     def _sigint_handler(sig, frame):
@@ -176,7 +165,6 @@ def main() -> None:
 
     signal.signal(signal.SIGINT, _sigint_handler)
 
-    # ── Connect ───────────────────────────────────────────────────────────────
     logger.info(f"Connecting to robot: {ROBOT_MODEL}")
     try:
         robot.connect(calibrate=CALIBRATE_ON_CONNECT)
@@ -199,9 +187,8 @@ def main() -> None:
     logger.info("Joystick connected and synced with robot state.")
     logger.info("Waiting for first joy message on /joy topic...")
 
-    # ── Gripper CSV log ────────────────────────────────────────────────────────
     gripper_log_f = open(GRIPPER_LOG_PATH, "w", newline="")
-    gripper_csv   = csv.writer(gripper_log_f)
+    gripper_csv = csv.writer(gripper_log_f)
     gripper_csv.writerow([
         "t_s", "step", "event",
         "kb_gripper", "kb_delta",
@@ -214,38 +201,35 @@ def main() -> None:
     def _read_gripper_hw():
         try:
             g = robot.bot.gripper
-            effort    = float(g.gripper_command.cmd)
-            finger_m  = float(g.get_finger_position())
-            lower     = float(g.left_finger_lower_limit)
-            upper     = float(g.left_finger_upper_limit)
-            moving    = bool(g.gripper_moving)
+            effort = float(g.gripper_command.cmd)
+            finger_m = float(g.get_finger_position())
+            lower = float(g.left_finger_lower_limit)
+            upper = float(g.left_finger_upper_limit)
+            moving = bool(g.gripper_moving)
             return effort, finger_m, lower, upper, moving
         except Exception:
             return 0.0, 0.0, 0.015, 0.037, False
 
-    # ── Control loop ──────────────────────────────────────────────────────────
-    loop_dt      = 1.0 / CONTROL_HZ
-    display_dt   = 1.0 / DISPLAY_HZ
-    last_disp_t  = 0.0
+    loop_dt = 1.0 / CONTROL_HZ
+    display_dt = 1.0 / DISPLAY_HZ
+    last_disp_t = 0.0
 
-    step                  = 0
-    total_action_time_ms  = 0.0
-    total_obs_time_ms     = 0.0
-    t_start               = time.perf_counter()
-    prev_kb_gripper       = initial_obs.get("gripper.pos", 1.0)
+    step = 0
+    total_action_time_ms = 0.0
+    total_obs_time_ms = 0.0
+    t_start = time.perf_counter()
+    prev_kb_gripper = initial_obs.get("gripper.pos", 1.0)
 
     logger.info(f"Control loop at {CONTROL_HZ:.0f} Hz. Press Ctrl+C to quit.\n")
 
     while teleop.is_connected:
         loop_start = time.perf_counter()
 
-        # ── Teleop events ──────────────────────────────────────────────────
         events = teleop.get_teleop_events()
         if events.get("terminate_episode", False):
             logger.info("Terminate signal from gamepad.")
             break
 
-        # ── Pose save / replay (A / B) ─────────────────────────────────────
         if teleop.consume_save_pose():
             try:
                 current_obs = robot.get_observation()
@@ -262,13 +246,11 @@ def main() -> None:
             except Exception as e:
                 print(f"\n[POSE] Replay failed: {e}")
 
-        # ── Get action ─────────────────────────────────────────────────────
-        action          = teleop.get_action()
-        kb_gripper      = action.get("gripper.pos", 1.0)
-        kb_delta        = kb_gripper - prev_kb_gripper
+        action = teleop.get_action()
+        kb_gripper = action.get("gripper.pos", 1.0)
+        kb_delta = kb_gripper - prev_kb_gripper
         prev_kb_gripper = kb_gripper
 
-        # ── Send action ────────────────────────────────────────────────────
         t0 = time.perf_counter()
         try:
             sent_action = robot.send_action(action)
@@ -278,10 +260,9 @@ def main() -> None:
         action_ms = (time.perf_counter() - t0) * 1e3
         total_action_time_ms += action_ms
 
-        # ── Gripper hardware state ─────────────────────────────────────────
         effort, finger_m, lower_m, upper_m, gripper_moving = _read_gripper_hw()
         finger_norm = (finger_m - lower_m) / (upper_m - lower_m) if upper_m > lower_m else 0.0
-        t_s         = time.perf_counter() - t_start
+        t_s = time.perf_counter() - t_start
 
         if kb_delta > 0.001:
             event = "LB_PRESSED"
@@ -312,7 +293,6 @@ def main() -> None:
             ])
             gripper_log_f.flush()
 
-        # ── Get observation ────────────────────────────────────────────────
         t0 = time.perf_counter()
         try:
             obs = robot.get_observation()
@@ -324,7 +304,6 @@ def main() -> None:
 
         step += 1
 
-        # ── Display ────────────────────────────────────────────────────────
         now = time.perf_counter()
         if now - last_disp_t >= display_dt:
             last_disp_t = now
@@ -340,13 +319,11 @@ def main() -> None:
                 flush=True,
             )
 
-        # ── Loop rate ──────────────────────────────────────────────────────
         elapsed = time.perf_counter() - loop_start
         sleep_t = loop_dt - elapsed
         if sleep_t > 0:
             time.sleep(sleep_t)
 
-    # ── Cleanup ───────────────────────────────────────────────────────────────
     print()
     gripper_log_f.close()
     logger.info(f"Gripper log saved to {GRIPPER_LOG_PATH}")

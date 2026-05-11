@@ -11,10 +11,8 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 
-# Import Interbotix API
 from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
 
-# Import LeRobot components  
 from lerobot.cameras.utils import make_cameras_from_configs
 from lerobot.utils.constants import OBS_STATE
 from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
@@ -49,8 +47,6 @@ class _JointStateListener(Node):
             return dict(self._latest) if self._latest is not None else None
 
 
-# This is basically: LeRobot (framework IA)  <-->  V300Interbotix  <-->  ROS2 / Interbotix API  <-->  Robot físico
-
 class V300Interbotix(Robot):
     """
     ViperX-300 S robot using official Interbotix Python API with ROS2
@@ -62,48 +58,38 @@ class V300Interbotix(Robot):
     def __init__(self, config: V300InterbotixConfig):
         super().__init__(config)
         self.config = config
-        
-        # Initialize Interbotix robot (will be set in connect())
+
         self.bot: Optional[InterbotixManipulatorXS] = None
-        
-        # State tracking
+
         self._is_connected = False
         self._current_positions: Dict[str, float] = {}
         self._ros_executor: Optional[MultiThreadedExecutor] = None
         self._ros_spin_thread: Optional[threading.Thread] = None
-        # Dedicated joint-state listener (own node + executor, no conflict with Interbotix)
+        # Separate node+executor so we don't conflict with the Interbotix internal executor
         self._js_listener: Optional[_JointStateListener] = None
-        
-        # Position conversion mappings (normalized LeRobot <-> Interbotix radians)
-        # ViperX 300 S 6DOF has 6 joints (waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate)
+
         self._joint_names = [
             "waist",
             "shoulder",
             "elbow",
-            "forearm_roll",  # Joint 6 - Forearm rotation
+            "forearm_roll",
             "wrist_angle",
             "wrist_rotate"
         ]
 
-        # Position limits for normalization (based on 6DOF specs, will be updated from robot info)
-        # Joint limits from spec: Waist ±180°, Shoulder -108 to 114°, Elbow -123 to 92°,
-        # Forearm Roll ±180°, Wrist Angle -100 to 123°, Wrist Rotate ±180°
+        # Fallback limits; overwritten from robot info in _update_joint_limits
         self._joint_limits = {
-            "waist": (-np.pi, np.pi),  # +-180°
-            "shoulder": (-1.88, 1.99),  # -108° to 114° (approx -1.88 to 1.99 rad)
-            "elbow": (-2.15, 1.60),  # -123° to 92° (approx -2.15 to 1.60 rad)
-            "forearm_roll": (-np.pi, np.pi),  # +-180° (Joint 6)
-            "wrist_angle": (-1.745, 2.15),  # -100° to 123° (approx -1.745 to 2.15 rad)
-            "wrist_rotate": (-np.pi, np.pi)  # +-180°
-        } # THIS IS A FALLBACK - we will update these limits from the robot info during connection
-        # TODO: potential test, are we using this fallabck? or are we successfully updating from robot info?
-        
-        # Initialize cameras
+            "waist": (-np.pi, np.pi),
+            "shoulder": (-1.88, 1.99),
+            "elbow": (-2.15, 1.60),
+            "forearm_roll": (-np.pi, np.pi),
+            "wrist_angle": (-1.745, 2.15),
+            "wrist_rotate": (-np.pi, np.pi)
+        }
+
         self.cameras = make_cameras_from_configs(config.cameras)
-        
-        # Thread safety
         self._state_lock = threading.Lock()
-        
+
         logger.info(f"V300Interbotix initialized with model: {config.robot_model}")
 
     @property
@@ -149,7 +135,6 @@ class V300Interbotix(Robot):
         import os
         import subprocess
 
-        # Check if ROS2 is sourced
         if 'ROS_DISTRO' not in os.environ:
             logger.warning(
                 "ROS_DISTRO not found in environment. "
@@ -157,11 +142,9 @@ class V300Interbotix(Robot):
                 "  $ source /opt/ros/<distro>/setup.bash"
             )
 
-        # Check if interbotix workspace is sourced (if needed)
         if 'INTERBOTIX_WS' in os.environ:
             logger.debug(f"Interbotix workspace: {os.environ['INTERBOTIX_WS']}")
 
-        # Verify control node is running
         try:
             result = subprocess.run(
                 ['ros2', 'node', 'list'],
@@ -200,12 +183,9 @@ class V300Interbotix(Robot):
 
         logger.info(f"Connecting to {self} using Interbotix API...")
 
-        # Verify ROS2 environment
         self._verify_ros2_setup()
 
         try:
-            # Initialize Interbotix robot
-            # Note: init_node parameter removed - not supported in this ROS2 version
             self.bot = InterbotixManipulatorXS(
                 robot_model=self.config.robot_model,
                 group_name=self.config.group_name,
@@ -217,25 +197,15 @@ class V300Interbotix(Robot):
                 gripper_pressure_lower_limit=self.config.gripper_pressure_lower_limit,
                 gripper_pressure_upper_limit=self.config.gripper_pressure_upper_limit
             )
-            
-            # Update joint limits from robot info
+
             self._update_joint_limits()
 
-            # Set gripper to PWM mode so xs_sdk_sim interprets ±effort as incremental rotation.
-            # In xs_sdk_sim, 'position' mode (the default) treats the cmd value as a target angle
-            # in radians — so our ±250 PWM effort would be misread as a 250-rad position target,
-            # giving garbage left_finger values and making G/H behave identically.
-            # Setting 'pwm' mode first ensures: angle += effort/2000 per sim tick (correct).
+            # xs_sdk_sim defaults gripper to 'position' mode, which misreads ±250 PWM effort
+            # as ±250 rad target angle. PWM mode interprets it as angle += cmd/2000 per tick.
             self._set_gripper_pwm_mode()
 
-            # Keep tmr_gripper_state ENABLED — it is the hardware safety mechanism that
-            # auto-stops the gripper when the finger reaches its physical limits.
-            # It only acts when gripper_moving=True, which we control explicitly in send_action.
-
-            # Start a dedicated joint-state listener on its own independent ROS2 node.
-            # The Interbotix API owns robot_node and manages its own executor internally;
-            # adding robot_node to a second executor causes a conflict and silently breaks
-            # joint-state updates. A separate listener node avoids all conflicts.
+            # Separate listener node so we don't add robot_node to a second executor,
+            # which would conflict with Interbotix's internal executor and break joint updates.
             js_topic = f"/{self.config.robot_name}/joint_states"
             # Include left_finger so the gripper encoder is read from the topic too
             arm_joints = self._joint_names + ["left_finger"]
@@ -248,25 +218,22 @@ class V300Interbotix(Robot):
             self._ros_spin_thread.start()
             logger.info(f"JointStateListener executor started on {js_topic}")
 
-            # Read initial positions
             self._update_positions()
 
             self._is_connected = True
-            
-            # Connect cameras
+
             for cam in self.cameras.values():
                 cam.connect()
-                
-            # Set up robot (move to home if needed)
+
             if calibrate:
                 self.calibrate()
-            
+
             logger.info(f"{self} connected successfully")
             logger.info(
                 f"IMPORTANT: run lerobot_record with --dataset.fps={self.config.fps} "
                 f"to match robot fps (moving_time={self.config.moving_time:.4f}s)"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to connect to {self}: {e}")
             self._is_connected = False
@@ -335,9 +302,7 @@ class V300Interbotix(Robot):
 
     def _denormalize_position(self, joint_name: str, normalized_pos: float) -> float:
         """Convert normalized position [-1, 1] back to joint radians"""
-        # Clamp to valid range
         normalized_pos = max(-1.0, min(1.0, normalized_pos))
-        
         lower, upper = self._joint_limits.get(joint_name, (-1.0, 1.0))
         return lower + (normalized_pos + 1.0) * (upper - lower) / 2.0
 
@@ -347,13 +312,11 @@ class V300Interbotix(Robot):
             return
 
         try:
-            # Prefer the dedicated listener which reads fresh encoder values from the
-            # joint_states topic. Fall back to get_joint_positions() (returns stale
-            # commanded positions when no executor is spinning the Interbotix node).
+            # Prefer the dedicated listener (fresh encoder values from topic) over
+            # get_joint_positions(), which returns stale commanded positions.
             listener_data = self._js_listener.latest_positions if self._js_listener else None
 
             with self._state_lock:
-                # Update arm joints
                 for i, joint_name in enumerate(self._joint_names):
                     if listener_data is not None and joint_name in listener_data:
                         raw_rad = listener_data[joint_name]
@@ -362,10 +325,8 @@ class V300Interbotix(Robot):
                         joint_positions = self.bot.arm.get_joint_positions()
                         normalized_pos = self._normalize_position(joint_name, joint_positions[i]) if i < len(joint_positions) else 0.0
                     self._current_positions[f"{joint_name}.pos"] = normalized_pos
-                
+
                 # Get gripper position (0=closed, 1=open for LeRobot compatibility)
-                # Prefer left_finger from the ROS topic (real encoder value).
-                # Fall back to get_finger_position() if the topic hasn't published yet.
                 try:
                     gripper_min = self.bot.gripper.left_finger_lower_limit
                     gripper_max = self.bot.gripper.left_finger_upper_limit
@@ -381,7 +342,7 @@ class V300Interbotix(Robot):
                 except Exception as e:
                     logger.debug(f"Could not read gripper position: {e}")
                     self._current_positions["gripper.pos"] = 0.0
-                    
+
         except Exception as e:
             logger.error(f"Failed to update positions: {e}")
 
@@ -407,24 +368,18 @@ class V300Interbotix(Robot):
 
         logger.info("Calibrating robot...")
 
-        # Calibration moves are large (full range from HOME → REST), so we need
-        # enough moving_time to stay under the π rad/s velocity limit.
-        # Worst case: wrist_angle REST ≈ 1.62 rad from HOME → needs ≥ 0.52 s.
-        # We use 2.0 s to be safe, then restore the configured moving_time after.
+        # Large HOME→REST moves need enough time to stay under the π rad/s velocity limit.
+        # wrist_angle REST ≈ 1.62 rad from HOME → needs ≥ 0.52 s; using 2.0 s for safety.
         CALIB_MOVING_TIME = 2.0
-        CALIB_ACCEL_TIME  = 0.5
+        CALIB_ACCEL_TIME = 0.5
 
         try:
             self.bot.arm.set_trajectory_time(CALIB_MOVING_TIME, CALIB_ACCEL_TIME)
 
-            # Step 1: Move to HOME position (all joints at 0) using built-in API method
             logger.info("Step 1/2: Moving to HOME position (all joints at 0, wrist aligned)")
             self.bot.arm.go_to_home_pose(blocking=True)
-            time.sleep(0.5)  # Brief pause at home position
+            time.sleep(0.5)
 
-            # Step 2: Move to REST position (safe, ready-to-record)
-            # Convert normalized positions to radians for each joint
-            # Joint order: [waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate]
             rest_positions = [
                 self._denormalize_position("waist", V300_REST_POSITION["waist.pos"]),
                 self._denormalize_position("shoulder", V300_REST_POSITION["shoulder.pos"]),
@@ -451,36 +406,29 @@ class V300Interbotix(Robot):
             if not self.bot.arm.set_joint_positions(rest_positions, blocking=True):
                 logger.warning("REST position rejected by Interbotix — positions may be outside joint limits")
 
-            # Restore normal trajectory timing for teleop
             self.bot.arm.set_trajectory_time(self.config.moving_time, self.config.accel_time)
             logger.debug(f"Restored trajectory time: moving={self.config.moving_time}s accel={self.config.accel_time}s")
 
-            # Handle gripper - move to open/closed position based on REST position state
-            # Use release()/grasp() from the Interbotix API, NOT raw effort+sleep.
-            # release()/grasp() call gripper_controller() which:
-            #   1. Checks left_finger position against URDF limits before sending
-            #   2. Sets gripper_moving=True so the 50Hz tmr_gripper_state timer auto-stops
-            #      the motor the moment the finger reaches its limit (prevents angle runaway in sim)
+            # Use release()/grasp() rather than raw effort+sleep: they check URDF limits before
+            # sending and set gripper_moving=True so the 50 Hz safety timer auto-stops the motor.
             if hasattr(self.bot, 'gripper'):
                 try:
                     if V300_REST_POSITION["gripper.pos"] > 0.5:
                         logger.info("  Opening gripper (release)...")
-                        self.bot.gripper.release(delay=2.0)  # timer auto-stops at upper_limit
+                        self.bot.gripper.release(delay=2.0)
                         logger.info("  Gripper opened")
                     else:
                         logger.info("  Closing gripper (grasp)...")
-                        self.bot.gripper.grasp(delay=2.0)  # timer auto-stops at lower_limit
+                        self.bot.gripper.grasp(delay=2.0)
                         logger.info("  Gripper closed")
                 except Exception as e:
                     logger.warning(f"Could not command gripper during calibration: {e}")
 
-            # Update positions after calibration
             self._update_positions()
 
             logger.info("Calibration completed - Robot at REST position (ready to record)")
 
         except Exception as e:
-            # Always restore trajectory time even if calibration fails partway through
             try:
                 self.bot.arm.set_trajectory_time(self.config.moving_time, self.config.accel_time)
             except Exception:
@@ -495,34 +443,27 @@ class V300Interbotix(Robot):
         """
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
-        
+
         logger.info("Configuring robot parameters...")
-        
+
         try:
-            # Set conservative movement parameters for safe operation
-            # These parameters help prevent sudden movements
-            
-            # Gripper pressure is already configured during initialization
-            # The gripper_pressure parameter is passed to InterbotixManipulatorXS constructor
             logger.debug(f"Gripper pressure configured at initialization: {self.config.gripper_pressure}")
-            
-            # Set operating mode to position control for all joints
+
             try:
                 if hasattr(self.bot.arm.core, 'robot_set_operating_modes'):
                     self.bot.arm.core.robot_set_operating_modes("group", "arm", "position")
                     logger.debug("Set arm operating mode to position control")
             except Exception as e:
                 logger.debug(f"Could not set operating mode: {e}")
-            
-            # Configure movement timing
+
             moving_time = getattr(self.config, 'moving_time', 2.0)
             accel_time = getattr(self.config, 'accel_time', 0.3)
             if hasattr(self.bot.arm, 'set_trajectory_time'):
                 self.bot.arm.set_trajectory_time(moving_time, accel_time)
                 logger.debug(f"Set trajectory time to {moving_time}s (accel={accel_time}s)")
-            
+
             logger.info("Robot configuration completed successfully")
-            
+
         except Exception as e:
             logger.warning(f"Some configuration parameters could not be set: {e}")
             # Don't raise exception as basic operation should still work
@@ -530,7 +471,7 @@ class V300Interbotix(Robot):
     def get_observation(self) -> Dict[str, Any]:
         """
         Get current robot observation (joint positions + camera images)
-        
+
         Returns:
             Dictionary with joint positions and camera images
         """
@@ -539,10 +480,8 @@ class V300Interbotix(Robot):
 
         obs_dict = {}
 
-        # Read all cameras in PARALLEL so their async_read() waits overlap.
-        # With N cameras at fps Hz, sequential reads cost N × (1/fps) worst-case;
-        # parallel reads cost 1 × (1/fps) — essential for staying within budget.
-        _MAX_DEPTH_MM = 700.0  # clip depth at 700 mm (70 cm workspace); normalize to uint8 [0,255]
+        # Read all cameras in parallel so their async_read() waits overlap.
+        _MAX_DEPTH_MM = 700.0  # clip depth at 700 mm; normalize to uint8 [0,255]
 
         def _read_one_camera(cam_key: str, cam: Any) -> Dict[str, Any]:
             t0 = time.perf_counter()
@@ -566,7 +505,6 @@ class V300Interbotix(Robot):
                 for fut in as_completed(futures):
                     obs_dict.update(fut.result())
 
-        # Update and get joint positions right after camera frame
         start = time.perf_counter()
         self._update_positions()
 
@@ -581,10 +519,10 @@ class V300Interbotix(Robot):
     def send_action(self, action: Dict[str, float]) -> Dict[str, float]:
         """
         Send action to robot (move to target joint positions)
-        
+
         Args:
             action: Dictionary of joint positions (normalized -1 to 1)
-            
+
         Returns:
             Dictionary of actual commands sent (potentially clipped)
         """
@@ -594,38 +532,28 @@ class V300Interbotix(Robot):
         if not self.bot:
             raise DeviceNotConnectedError("Interbotix robot not initialized")
 
-        # Extract joint positions from action (convert Tensors/arrays to plain float)
         goal_pos = {key.removesuffix(".pos"): float(val) for key, val in action.items() if key.endswith(".pos")}
-        
-        # Apply safety limits if configured
+
         if self.config.max_relative_target is not None:
             with self._state_lock:
                 present_pos = self._current_positions.copy()
-            
+
             goal_present_pos = {key: (g_pos, present_pos.get(f"{key}.pos", 0.0)) for key, g_pos in goal_pos.items()}
             goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
 
         try:
-            # Send arm joint commands
             # Fetch current positions once before the loop (avoid repeated ROS2 service calls)
             current_joints = self.bot.arm.get_joint_positions()
             arm_positions = []
             for idx, joint_name in enumerate(self._joint_names):
                 if joint_name in goal_pos:
-                    # Convert normalized position to radians
                     joint_rad = self._denormalize_position(joint_name, goal_pos[joint_name])
                     arm_positions.append(joint_rad)
                 else:
-                    # Keep current position if not specified
                     arm_positions.append(current_joints[idx] if idx < len(current_joints) else 0.0)
-            
-            # Send joint position command (non-blocking for real-time control)
-            # set_joint_positions returns False if any position is outside URDF limits OR
-            # if the required speed (|goal-commanded| / moving_time) exceeds joint velocity limits.
-            #
-            # Velocity rejection happens when the keyboard jumps far (R key, 0 key, or key repeat
-            # burst). In that case, clamp each joint to the maximum achievable delta this cycle
-            # (velocity_limit × moving_time) so the robot always makes progress toward the target.
+
+            # set_joint_positions rejects if speed (|goal-commanded| / moving_time) exceeds velocity limits.
+            # On rejection, clamp each joint to the max achievable delta this cycle so the robot makes progress.
             if not self.bot.arm.set_joint_positions(arm_positions, blocking=False):
                 try:
                     moving_time = self.bot.arm.moving_time
@@ -645,75 +573,52 @@ class V300Interbotix(Robot):
                         logger.debug(f"Velocity-clamped arm positions toward target")
                 except Exception as e:
                     logger.warning(f"set_joint_positions rejected and clamping failed: {e}")
-            
-            # Gripper effort control — direction-based, fire-and-forget per cycle
-            #
-            # The Interbotix gripper is PWM/current-controlled:
-            #   positive effort → motor opens finger
-            #   negative effort → motor closes finger
-            #   zero effort     → motor stops
-            #
-            # delta = gripper_cmd - current_physical_norm
-            #   delta > 0  →  commanded target is MORE open than current  → open motor
-            #   delta < 0  →  commanded target is LESS open than current  → close motor
-            #   delta ≈ 0  →  at target                                   → stop motor
-            #
-            # Using physical position (not a running counter) means:
-            #   1. Teleop: counter clamped at [0,1]; delta vs physical stays nonzero
-            #      as long as gripper hasn't reached the target → no saturation.
-            #   2. Policy inference: policy predicts physical [0,1] target; delta vs
-            #      current physical gives the correct drive direction every step.
-            #
-            # gripper_moving=True lets the safety timer (tmr_gripper_state, 50 Hz)
-            # auto-stop the motor when the finger reaches its hardware limits.
+
+            # Gripper is PWM/current-controlled: positive effort opens, negative closes, zero stops.
+            # delta = gripper_cmd - current_physical_norm drives direction each cycle.
+            # gripper_moving=True lets the 50 Hz safety timer auto-stop at hardware limits.
             if "gripper" in goal_pos and hasattr(self.bot, 'gripper'):
                 gripper_cmd = goal_pos["gripper"]
 
                 try:
                     max_effort = abs(self.bot.gripper.gripper_value)
 
-                    # Use the ROS-topic-based gripper position (same source as observation)
-                    # so that position-replay commands and delta calculation are consistent.
+                    # Use the ROS-topic-based gripper position so replay and delta calc are consistent.
                     with self._state_lock:
                         finger_norm = self._current_positions.get("gripper.pos", 0.5)
 
                     delta = gripper_cmd - finger_norm
 
                     if delta > 0.05:
-                        # Target is more open than current → open motor
                         self.bot.gripper.gripper_command.cmd = max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = True
                         logger.debug(f"Gripper OPEN  effort=+{max_effort:.0f}  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
                     elif delta < -0.05:
-                        # Target is more closed than current → close motor
                         self.bot.gripper.gripper_command.cmd = -max_effort
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = True
                         logger.debug(f"Gripper CLOSE effort={-max_effort:.0f}  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
                     else:
-                        # At target → stop motor
                         self.bot.gripper.gripper_command.cmd = 0.0
                         self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                         self.bot.gripper.gripper_moving = False
                         logger.debug(f"Gripper HOLD  finger={finger_norm:.3f}  target={gripper_cmd:.3f}  delta={delta:+.3f}")
                 except Exception as e:
                     logger.warning(f"Failed to command gripper: {e}")
-            
+
             logger.debug(f"Sent action to robot: {goal_pos}")
-            
+
         except Exception as e:
             logger.error(f"Failed to send action: {e}")
             raise
 
-        # Return the actual commands sent
         return {f"{joint}.pos": val for joint, val in goal_pos.items()}
 
     def _shutdown_ros2(self) -> None:
         """Stop the Interbotix executor thread, destroy the node, and shut down rclpy."""
         import rclpy
 
-        # 0. Shut down the dedicated joint-state listener executor
         if self._ros_executor is not None:
             try:
                 self._ros_executor.shutdown(timeout_sec=2.0)
@@ -738,11 +643,9 @@ class V300Interbotix(Robot):
 
         core = getattr(self.bot, "core", None)
         if core is None:
-            # core may live on arm or gripper
             core = getattr(getattr(self.bot, "arm", None), "core", None)
 
         if core is not None:
-            # 1. Stop the MultiThreadedExecutor spin loop
             executor = getattr(core, "executor", None)
             if executor is not None:
                 try:
@@ -751,7 +654,6 @@ class V300Interbotix(Robot):
                 except Exception as e:
                     logger.debug(f"executor.shutdown: {e}")
 
-            # 2. Join the spin thread so it exits cleanly
             spin_thread = getattr(core, "thread", None)
             if spin_thread is not None and spin_thread.is_alive():
                 try:
@@ -760,14 +662,12 @@ class V300Interbotix(Robot):
                 except Exception as e:
                     logger.debug(f"spin_thread.join: {e}")
 
-            # 3. Destroy the node
             try:
                 core.destroy_node()
                 logger.debug("ROS2 node destroyed")
             except Exception as e:
                 logger.debug(f"destroy_node: {e}")
 
-        # 4. Shutdown the rclpy context (safe to call even if already done)
         try:
             if rclpy.ok():
                 rclpy.try_shutdown()
@@ -784,41 +684,32 @@ class V300Interbotix(Robot):
 
         logger.info(f"Disconnecting {self}...")
 
-        # Stop gripper before disconnect
         if self.bot and hasattr(self.bot, 'gripper'):
             try:
-                # Stop any ongoing gripper movement
                 self.bot.gripper.gripper_moving = False
-
-                # Send zero effort command to stop gripper motor
                 self.bot.gripper.gripper_command.cmd = 0.0
                 self.bot.gripper.core.pub_single.publish(self.bot.gripper.gripper_command)
                 logger.info("Gripper stopped (effort=0)")
 
-                # Disable gripper torque to stop all gripper commands immediately
                 if hasattr(self.bot.gripper.core, 'robot_torque_enable'):
                     self.bot.gripper.core.robot_torque_enable('single', 'gripper', False)
                     logger.info("Gripper torque disabled")
             except Exception as e:
                 logger.warning(f"Could not stop gripper: {e}")
 
-        # Disconnect cameras
         for cam in self.cameras.values():
             try:
                 cam.disconnect()
             except Exception as e:
                 logger.warning(f"Error disconnecting camera: {e}")
 
-        # Clean up robot connection and shutdown ROS2 node
         self._is_connected = False
         if self.bot:
             try:
-                # Disable torque for all motors to stop any ongoing commands
                 if hasattr(self.bot.arm.core, 'robot_torque_enable'):
                     self.bot.arm.core.robot_torque_enable('group', 'arm', False)
                     logger.info("Arm torque disabled")
 
-                # Shutdown the ROS2 executor and node
                 self._shutdown_ros2()
             except Exception as e:
                 logger.warning(f"Error during robot shutdown: {e}")

@@ -48,12 +48,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("record_replay_test")
 
-# ── Config ────────────────────────────────────────────────────────────────────
-
 ROBOT_MODEL = "wx250s"
-ROBOT_NAME  = "wx250s"
-# Calibration uses slow moves (2s) — the robot config auto-computes
-# fast teleop timing (1/fps) but calibrate() overrides internally.
+ROBOT_NAME = "wx250s"
 
 RESULTS_PATH = Path("/tmp/w250_roundtrip_results.json")
 
@@ -72,7 +68,6 @@ TEST_POSES_NORM = [
     [0.0,   -0.3,   0.25,  0.0,  0.45,  0.0],   # pose D
 ]
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def denormalize(joint_name: str, norm: float, limits: dict) -> float:
     norm = max(-1.0, min(1.0, norm))
@@ -103,8 +98,6 @@ def check(label: str, expected_rad: list[float], actual_rad: list[float],
     return max_err
 
 
-# ── Main test ─────────────────────────────────────────────────────────────────
-
 def run_test() -> None:
     from lerobot.robots.w250.config_w250_interbotix import W250InterbotixConfig
     from lerobot.robots.w250.w250_interbotix import W250Interbotix
@@ -118,27 +111,22 @@ def run_test() -> None:
     robot = W250Interbotix(robot_cfg)
     robot.connect(calibrate=True)
 
-    # The middleware's joint limits — used to convert between norm and radians.
     limits = dict(robot._joint_limits)
     logger.info("Joint limits loaded by middleware:")
     for name in JOINT_NAMES:
         lo, hi = limits[name]
         logger.info(f"  {name}: [{lo:.4f}, {hi:.4f}] rad")
 
-    # The direct Interbotix arm handle — bypasses our normalization entirely.
-    # This is the ground truth: raw radians straight from the hardware.
+    # Direct arm handle — bypasses our normalization; raw radians from hardware.
     direct = robot.bot.arm
 
-    # ── Note on xs_sdk_sim limitation ────────────────────────────────────────
     # get_joint_positions() reads /wx250s/joint_states, which xs_sdk_sim does NOT
     # update after commands — it always publishes the initial sleep pose.
-    # joint_commands IS updated immediately when set_joint_positions succeeds.
-    # We therefore use joint_commands as the ground truth for what the robot
-    # was commanded to, which lets us test the normalization math reliably.
+    # joint_commands IS updated immediately when set_joint_positions succeeds,
+    # so we use it as ground truth for what the robot was commanded to.
     logger.info(f"joint_commands after calibrate: "
                 f"{[f'{n}={v:+.4f}' for n, v in zip(JOINT_NAMES, list(direct.joint_commands))]}")
     logger.info(f"Velocity limits: {list(direct.group_info.joint_velocity_limits)}")
-    # ─────────────────────────────────────────────────────────────────────────
 
     all_results = []
     try:
@@ -150,34 +138,27 @@ def run_test() -> None:
             print(f"Pose: {label}  (normalized: {[f'{v:+.3f}' for v in target_norm]})")
             print(f"{'='*60}")
 
-            # What position the middleware SHOULD send (in radians)
             expected_rad = [denormalize(n, v, limits) for n, v in zip(JOINT_NAMES, target_norm)]
             print(f"  Expected (denorm): {[f'{r:+.4f}' for r in expected_rad]} rad\n")
 
-            # ── Send via middleware ────────────────────────────────────────
             robot.send_action(action)
 
-            # ── Ground truth: joint_commands (updated when SDK sends command)
-            # This is what was actually commanded to the robot.  In xs_sdk_sim
-            # get_joint_positions() returns stale sleep values (sim bug), so we
-            # use joint_commands instead — it reflects the last accepted command.
+            # joint_commands reflects the last accepted command; get_joint_positions()
+            # returns stale sleep values in xs_sdk_sim (sim bug), so avoid it.
             cmd_rad = list(direct.joint_commands)
 
-            # ── Middleware observation ─────────────────────────────────────
             obs = robot.get_observation()
             obs_norm = [obs.get(f"{name}.pos", float("nan")) for name in JOINT_NAMES]
             obs_as_rad = [denormalize(n, v, limits) for n, v in zip(JOINT_NAMES, obs_norm)]
 
-            # ── Check A: send_action math ──────────────────────────────────
-            # denorm(norm_sent) should equal joint_commands.
+            # Check A: denorm(norm_sent) should equal joint_commands.
             # Tests _denormalize_position: did the middleware convert correctly?
             err_a = check(
                 "A) send_action math  [denorm(norm_sent) vs joint_commands]:",
                 expected_rad, cmd_rad,
             )
 
-            # ── Check B: round-trip ────────────────────────────────────────
-            # normalize(joint_commands) should equal norm_sent.
+            # Check B: normalize(joint_commands) should equal norm_sent.
             # Tests _normalize_position: if we observe the commanded position,
             # do we get back the original normalized value?
             cmd_renorm = [normalize(n, v, limits) for n, v in zip(JOINT_NAMES, cmd_rad)]
@@ -204,7 +185,6 @@ def run_test() -> None:
             pass
         robot.disconnect()
 
-    # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'='*70}")
     print("SUMMARY")
     print(f"{'='*70}")
@@ -223,8 +203,6 @@ def run_test() -> None:
     RESULTS_PATH.write_text(json.dumps(all_results, indent=2))
     logger.info(f"Full results saved to {RESULTS_PATH}")
 
-
-# ── Entry point ───────────────────────────────────────────────────────────────
 
 def main() -> None:
     run_test()

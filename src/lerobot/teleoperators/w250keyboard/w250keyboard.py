@@ -35,8 +35,7 @@ from .config_w250keyboard import W250KeyboardConfig
 logger = logging.getLogger(__name__)
 
 
-# Maps key character → (joint_key, direction)
-# direction: +1 or -1 applied to step_size
+# Maps key character → (joint_key, direction), direction: +1 or -1 applied to step_size
 _KEY_MAP: dict[str, tuple[str, float]] = {
     # Waist
     "a": ("waist.pos", +1.0),
@@ -88,37 +87,27 @@ class W250KeyboardTeleop(Teleoperator):
         self._is_connected = False
         self._quit_requested = False
 
-        # Current absolute positions (normalized).
-        # Initialized to REST position so the first action after robot.connect()
-        # (which calibrates to REST) produces zero delta — no lurch on start.
-        # Call sync_with_robot() to update if the robot is somewhere else.
+        # Initialized to REST so the first action after robot.connect() (which calibrates
+        # to REST) produces zero delta — no lurch on start. Call sync_with_robot() to update.
         self._positions: dict[str, float] = dict(W250_REST_POSITION)
 
-        # Set to True whenever a movement key is pressed; consumed by get_teleop_events()
         self._intervention_flag: bool = False
-
-        # One-shot flags set by P / F keys, consumed by the main loop
         self._save_pose_requested = False
         self._replay_pose_requested = False
 
-        # Background thread that reads keyboard
         self._reader_thread: threading.Thread | None = None
-
-        # Saved terminal settings for restore on disconnect
         self._old_termios: list | None = None
-
-    # ── LeRobot interface ──────────────────────────────────────────────────
 
     @property
     def action_features(self) -> dict[str, type]:
         return {
-            "waist.pos":        float,
-            "shoulder.pos":     float,
-            "elbow.pos":        float,
+            "waist.pos": float,
+            "shoulder.pos": float,
+            "elbow.pos": float,
             "forearm_roll.pos": float,
-            "wrist_angle.pos":  float,
+            "wrist_angle.pos": float,
             "wrist_rotate.pos": float,
-            "gripper.pos":      float,
+            "gripper.pos": float,
         }
 
     @property
@@ -150,7 +139,6 @@ class W250KeyboardTeleop(Teleoperator):
                 "stdin is not a TTY — keyboard teleop requires an interactive terminal"
             )
 
-        # Save current terminal settings and switch to cbreak mode.
         # cbreak (vs raw): no line buffering, still char-by-char, but signal
         # characters (Ctrl+C → SIGINT) still work — required for lerobot-record.
         self._old_termios = termios.tcgetattr(sys.stdin)
@@ -159,7 +147,6 @@ class W250KeyboardTeleop(Teleoperator):
         self._is_connected = True
         self._quit_requested = False
 
-        # Start background reader thread
         self._reader_thread = threading.Thread(
             target=self._read_keys, daemon=True, name="w250kb-reader"
         )
@@ -175,7 +162,6 @@ class W250KeyboardTeleop(Teleoperator):
         self._is_connected = False
         self._quit_requested = True
 
-        # Restore terminal
         if self._old_termios is not None:
             try:
                 termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._old_termios)
@@ -202,8 +188,6 @@ class W250KeyboardTeleop(Teleoperator):
     def send_feedback(self, feedback: dict) -> None:
         pass
 
-    # ── Pose save / replay signals ─────────────────────────────────────────
-
     def consume_save_pose(self) -> bool:
         """Return True (once) if P was pressed since the last call."""
         if self._save_pose_requested:
@@ -218,8 +202,6 @@ class W250KeyboardTeleop(Teleoperator):
             return True
         return False
 
-    # ── Sync with robot ────────────────────────────────────────────────────
-
     def sync_with_robot(self, robot_observation: dict[str, float]) -> None:
         """
         Sync internal positions with robot's actual state.
@@ -229,8 +211,6 @@ class W250KeyboardTeleop(Teleoperator):
             if key in robot_observation:
                 self._positions[key] = float(robot_observation[key])
         logger.info("Keyboard positions synced with robot state")
-
-    # ── Internal ───────────────────────────────────────────────────────────
 
     def _read_keys(self) -> None:
         """Background thread: reads chars from stdin and updates _positions.
@@ -254,21 +234,19 @@ class W250KeyboardTeleop(Teleoperator):
                 # keep spinning rather than killing the thread.
                 continue
 
-            # Quit (q only — ESC is NOT a quit key here because arrow keys
-            # produce \x1b[A/B/C/D which would trigger it by accident)
+            # Only 'q' quits — ESC is NOT a quit key here because arrow keys
+            # produce \x1b[A/B/C/D which would trigger it by accident
             if ch in _QUIT_KEYS:
                 _exit_reason = "q key"
                 self._quit_requested = True
                 self._is_connected = False
                 break
 
-            # Step size adjustment (instant, not held)
             if ch == _STEP_INCREASE_KEY:
                 self._step_size = min(
                     self.config.step_size_max,
                     self._step_size + self.config.step_size_increment
                 )
-                # Print without disrupting terminal (best effort)
                 sys.stdout.write(f"\r[keyboard] step_size={self._step_size:.3f}  \r")
                 sys.stdout.flush()
                 continue
@@ -282,14 +260,12 @@ class W250KeyboardTeleop(Teleoperator):
                 sys.stdout.flush()
                 continue
 
-            # Reset to REST position
             if ch == _RESET_REST_KEY:
                 self._positions.update(W250_REST_POSITION)
                 sys.stdout.write("\r[keyboard] Reset to REST position  \r")
                 sys.stdout.flush()
                 continue
 
-            # Reset to HOME (all zeros)
             if ch == _RESET_HOME_KEY:
                 for k in self._positions:
                     self._positions[k] = 0.0
@@ -297,7 +273,6 @@ class W250KeyboardTeleop(Teleoperator):
                 sys.stdout.flush()
                 continue
 
-            # Pose save (P) / replay (F)
             if ch == "p":
                 self._save_pose_requested = True
                 sys.stdout.write("\r[keyboard] Saving pose...             \r")
@@ -310,12 +285,9 @@ class W250KeyboardTeleop(Teleoperator):
                 sys.stdout.flush()
                 continue
 
-            # Gripper — clamped to [0, 1] so the dataset records a physical target position.
-            # Saturation (motor stopping after a few presses) is no longer a problem because
-            # send_action() computes delta = gripper_cmd - current_physical_position, not
-            # delta = gripper_cmd - last_counter. Even when the counter is clamped at 1.0,
-            # the delta vs physical position stays positive as long as the gripper isn't
-            # fully open yet → motor keeps driving.
+            # Gripper clamped to [0,1] so the dataset records a physical target position.
+            # Saturation is not a problem: send_action() computes delta vs current_physical_position,
+            # so even when counter is clamped at 1.0, delta stays positive until gripper fully opens.
             if ch == _GRIPPER_OPEN_KEY:
                 self._positions["gripper.pos"] = min(1.0, self._positions["gripper.pos"] + self.config.gripper_step_size)
                 self._intervention_flag = True
@@ -334,25 +306,11 @@ class W250KeyboardTeleop(Teleoperator):
 
     def _print_controls(self) -> None:
         controls = (
-            "\n"
-            "╔══════════════════════════════════════════╗\n"
-            "║      W250 Keyboard Teleoperator          ║\n"
-            "╠══════════════════════════════════════════╣\n"
-            "║  A / D   → Waist       (left / right)   ║\n"
-            "║  W / S   → Shoulder    (up / down)      ║\n"
-            "║  I / K   → Elbow       (up / down)      ║\n"
-            "║  J / L   → Forearm roll                 ║\n"
-            "║  U / O   → Wrist angle                  ║\n"
-            "║  T / Y   → Wrist rotate                 ║\n"
-            "║  G       → Gripper open                 ║\n"
-            "║  H       → Gripper close                ║\n"
-            "║  R       → Reset to REST position       ║\n"
-            "║  0       → Reset to HOME (all zeros)    ║\n"
-            "║  + / -   → Step size up / down          ║\n"
-            "║  P       → Save current pose            ║\n"
-            "║  F       → Replay saved pose + error    ║\n"
-            "║  Q       → Quit                         ║\n"
-            "╚══════════════════════════════════════════╝\n"
+            "\nW250 Keyboard Controls:\n"
+            "  A/D  waist    W/S  shoulder  I/K  elbow\n"
+            "  J/L  forearm  U/O  wrist angle  T/Y  wrist rotate\n"
+            "  G    gripper open   H  gripper close\n"
+            "  R    REST   0  HOME   +/-  step size   P  save   F  replay   Q  quit\n"
         )
         sys.stdout.write(controls)
         sys.stdout.flush()

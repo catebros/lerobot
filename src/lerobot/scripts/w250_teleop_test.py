@@ -55,7 +55,6 @@ import sys
 import time
 from pathlib import Path
 
-# ── Setup logging before any other imports ────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -63,38 +62,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger("w250_teleop_test")
 
-# ── Imports ───────────────────────────────────────────────────────────────────
 from lerobot.robots.w250.config_w250_interbotix import W250InterbotixConfig
 from lerobot.robots.w250.w250_interbotix import W250Interbotix
 from lerobot.teleoperators.w250keyboard import W250KeyboardConfig, W250KeyboardTeleop
 
+ROBOT_MODEL = "wx250s"
+ROBOT_NAME = "wx250s"
 
-# ── Configuration — adjust to match your setup ───────────────────────────────
+FPS = 15
+DISPLAY_HZ = 5.0
 
-ROBOT_MODEL = "wx250s"       # Interbotix model name (wx250, wx250s, etc.)
-ROBOT_NAME  = "wx250s"       # ROS2 namespace
+CONTROL_HZ = float(FPS)
+MOVING_TIME = 1.0 / FPS
+ACCEL_TIME = MOVING_TIME / 4
 
-# Frequency — single value, all timing derived from it.
-# Must match: dataset fps, camera fps, W250InterbotixConfig.fps.
-FPS         = 15             # Hz — change only this line
-DISPLAY_HZ  = 5.0            # how often to print state to terminal (Hz)
-
-# Derived — do not change directly
-CONTROL_HZ  = float(FPS)
-MOVING_TIME = 1.0 / FPS       # auto-derived: robot completes each move in one period
-ACCEL_TIME  = MOVING_TIME / 4
-
-# Set True if you want the robot to start by moving to HOME then REST
 CALIBRATE_ON_CONNECT = True
 
-# Gripper log file — written to /tmp for easy access from WSL
 GRIPPER_LOG_PATH = Path("/tmp/gripper_log.csv")
-
-# Saved pose file (P = save, F = replay)
 POSE_LOG_PATH = Path("/tmp/saved_pose.json")
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def format_state(obs: dict[str, float]) -> str:
     """Format joint state as a compact one-line string."""
@@ -129,7 +115,7 @@ def save_pose(obs: dict[str, float]) -> None:
     sys.stdout.flush()
 
 
-def replay_pose(robot, path: Path) -> None: 
+def replay_pose(robot, path: Path) -> None:
     """
     Load saved pose and send it as an action. Then read back the observation
     and print per-joint error so we can verify round-trip accuracy.
@@ -148,14 +134,11 @@ def replay_pose(robot, path: Path) -> None:
     sys.stdout.write(f"\n[POSE] Replaying: {format_state(saved)}\n")
     sys.stdout.flush()
 
-    # Send action (arm joints only — gripper excluded)
     action = {k: saved[k] for k in arm_keys}
     robot.send_action(action)
 
-    # Wait for the robot to (approximately) finish moving
     time.sleep(robot.config.moving_time + 0.2)
 
-    # Read back observation and compare
     obs_after = robot.get_observation()
     sys.stdout.write("[POSE] Round-trip error (saved → action → observed):\n")
     max_err = 0.0
@@ -169,18 +152,14 @@ def replay_pose(robot, path: Path) -> None:
     sys.stdout.flush()
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-
 def main() -> None:
-    # Build robot config
     robot_cfg = W250InterbotixConfig(
         robot_model=ROBOT_MODEL,
         robot_name=ROBOT_NAME,
-        fps=FPS,          # moving_time and accel_time auto-derived
-        cameras={},       # no cameras for this test
+        fps=FPS,
+        cameras={},
     )
 
-    # Build keyboard teleop config
     teleop_cfg = W250KeyboardConfig(
         step_size=0.01,
         gripper_step_size=0.10,
@@ -201,7 +180,6 @@ def main() -> None:
 
     signal.signal(signal.SIGINT, _sigint_handler)
 
-    # ── Connect ───────────────────────────────────────────────────────────────
     logger.info(f"Connecting to robot: {ROBOT_MODEL}")
     try:
         robot.connect(calibrate=CALIBRATE_ON_CONNECT)
@@ -219,24 +197,9 @@ def main() -> None:
 
     logger.info(f"Initial state: {format_state(initial_obs)}")
 
-    # Connect keyboard and sync positions with robot state
     teleop.connect()
     teleop.sync_with_robot(initial_obs)
 
-    # ── Gripper CSV log ────────────────────────────────────────────────────────
-    # Columns:
-    #   t_s          — seconds since start
-    #   step         — control loop step number
-    #   event        — G_PRESSED | H_PRESSED | STEP
-    #   kb_gripper   — keyboard gripper.pos  [0,1]
-    #   kb_delta     — change in keyboard gripper.pos this cycle
-    #   effort_sent  — PWM effort published (+250 / −250 / 0)
-    #   finger_m     — left_finger actual position [meters]
-    #   finger_norm  — finger_m normalized to [0,1]
-    #   lower_m      — left_finger URDF lower limit [meters]
-    #   upper_m      — left_finger URDF upper limit [meters]
-    #   gripper_moving — gripper_moving flag (True/False)
-    #   note         — at_upper | at_lower | open | close | stop | n/a
     gripper_log_f = open(GRIPPER_LOG_PATH, "w", newline="")
     gripper_csv = csv.writer(gripper_log_f)
     gripper_csv.writerow([
@@ -261,7 +224,6 @@ def main() -> None:
         except Exception:
             return 0.0, 0.0, 0.015, 0.037, False
 
-    # ── Control loop ──────────────────────────────────────────────────────────
     loop_dt = 1.0 / CONTROL_HZ
     display_dt = 1.0 / DISPLAY_HZ
     last_display_t = 0.0
@@ -277,15 +239,12 @@ def main() -> None:
     while teleop.is_connected:
         loop_start = time.perf_counter()
 
-        # ── Get teleop events ──────────────────────────────────────────────
         events = teleop.get_teleop_events()
         if events.get("terminate_episode", False):
             logger.info("Quit requested from keyboard.")
             break
 
-        # ── Pose save / replay (P / F) ─────────────────────────────────────
         if teleop.consume_save_pose():
-            # Read latest observation and save it
             try:
                 current_obs = robot.get_observation()
                 save_pose(current_obs)
@@ -304,13 +263,11 @@ def main() -> None:
                 sys.stdout.write(f"\n[POSE] Replay failed: {e}\n")
                 sys.stdout.flush()
 
-        # ── Get action from keyboard ───────────────────────────────────────
         action = teleop.get_action()
         kb_gripper = action.get("gripper.pos", 0.0)
         kb_delta = kb_gripper - prev_kb_gripper
         prev_kb_gripper = kb_gripper
 
-        # ── Send action to robot ───────────────────────────────────────────
         t0 = time.perf_counter()
         try:
             sent_action = robot.send_action(action)
@@ -320,12 +277,10 @@ def main() -> None:
         action_ms = (time.perf_counter() - t0) * 1e3
         total_action_time_ms += action_ms
 
-        # ── Read gripper hardware state (after send_action) ───────────────
         effort, finger_m, lower_m, upper_m, gripper_moving = _read_gripper_hw()
         finger_norm = (finger_m - lower_m) / (upper_m - lower_m) if (upper_m > lower_m) else 0.0
         t_s = time.perf_counter() - t_start
 
-        # Classify event
         if kb_delta > 0.001:
             event = "G_PRESSED"
         elif kb_delta < -0.001:
@@ -333,7 +288,6 @@ def main() -> None:
         else:
             event = "STEP"
 
-        # Note what the motor is doing
         if effort > 1.0:
             note = "open"
         elif effort < -1.0:
@@ -345,7 +299,6 @@ def main() -> None:
         else:
             note = "stop"
 
-        # Write CSV row — always for G/H events, every 5 steps otherwise
         if event != "STEP" or step % 5 == 0:
             gripper_csv.writerow([
                 f"{t_s:.3f}", step, event,
@@ -357,7 +310,6 @@ def main() -> None:
             ])
             gripper_log_f.flush()
 
-        # ── Read observation from robot ────────────────────────────────────
         t0 = time.perf_counter()
         try:
             obs = robot.get_observation()
@@ -369,7 +321,6 @@ def main() -> None:
 
         step += 1
 
-        # ── Display state periodically ────────────────────────────────────
         now = time.perf_counter()
         if now - last_display_t >= display_dt:
             last_display_t = now
@@ -386,13 +337,11 @@ def main() -> None:
             )
             sys.stdout.flush()
 
-        # ── Maintain loop rate ─────────────────────────────────────────────
         elapsed = time.perf_counter() - loop_start
         sleep_t = loop_dt - elapsed
         if sleep_t > 0:
             time.sleep(sleep_t)
 
-    # ── Cleanup ───────────────────────────────────────────────────────────────
     sys.stdout.write("\n")
     sys.stdout.flush()
 

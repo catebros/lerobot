@@ -20,37 +20,11 @@ from ..config import TeleoperatorConfig
 @TeleoperatorConfig.register_subclass("w250keyboard")
 @dataclass
 class W250KeyboardConfig(TeleoperatorConfig):
-    """
-    Configuration for keyboard teleoperator for W250 robot.
+    """Configuration for W250 keyboard teleoperator (termios raw mode, no DISPLAY needed)."""
 
-    Works in terminal (no DISPLAY required) — uses termios raw mode.
-
-    Controls:
-        A / D       → Waist       (rotate left / right)
-        W / S       → Shoulder    (up / down)
-        I / K       → Elbow       (up / down)
-        J / L       → Forearm roll (left / right)
-        U / O       → Wrist angle  (up / down)
-        T / Y       → Wrist rotate (left / right)
-        G           → Gripper open
-        H           → Gripper close
-        R           → Reset to REST position
-        0           → Reset to HOME (all joints at 0)
-        +  / -      → Increase / decrease step size
-        Q / ESC     → Quit
-    """
-
-    # Step size per keypress (normalized units, arm joints in [-1,1])
     step_size: float = 0.02
-
-    # Min/max step size when using +/- keys
     step_size_min: float = 0.005
     step_size_max: float = 0.1
     step_size_increment: float = 0.005
-
-    # Gripper step size (range [0,1])
     gripper_step_size: float = 0.1
-
-    # Control loop frequency (Hz) — MUST match robot fps and dataset fps.
-    # Default matches W250InterbotixConfig.fps default (10 Hz).
     control_hz: float = 15.0

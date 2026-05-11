@@ -15,52 +15,28 @@ class V300InterbotixConfig(RobotConfig):
     """
     Configuration for ViperX-300 S robot using Interbotix Python API with ROS2
 
-    Frequency,  everything must agree:
-        fps = control loop rate = dataset recording rate
-        moving_time  = 1 / fps   (auto-computed if left as None)
-        accel_time = moving_time / 4  (auto-computed if left None)
-        camera fps = fps (set in each CameraConfig)
-        lerobot_record --dataset.fps = fps
-        Change only `fps` and the rest follow automatically.
+    Change only `fps` — moving_time and accel_time are derived automatically.
+    All cameras and the dataset must use the same fps.
     """
 
-    # Robot model name for Interbotix API
     robot_model: str = "vx300s"
-
-    # ROS2 namespace for the robot
     robot_name: str = "vx300s"
-
-    # Joint group name (standard Interbotix configuration)
     group_name: str = "arm"
-
-    # Gripper joint name (standard Interbotix configuration)
     gripper_name: str = "gripper"
 
-    # ── Frequency ─────────────────────────────────────────────────────────────
     fps: int = 15
+    moving_time: Optional[float] = None  # auto: 1/fps
+    accel_time: Optional[float] = None   # auto: moving_time / 4
 
-    moving_time: Optional[float] = None  # seconds  (auto: 1/fps)
-    accel_time: Optional[float] = None   # seconds  (auto: moving_time / 4)
-
-    # Gripper control parameters
     gripper_pressure: float = 0.5
     gripper_pressure_lower_limit: int = 150
     gripper_pressure_upper_limit: int = 350
 
-    # ROS2 specific settings
     use_moveit: bool = False
-
-    # Camera configurations (inherited from base RobotConfig)
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
-
-    # Motor calibration settings
     calibration_dir: Path = Path("~/.cache/huggingface/lerobot/calibration")
-
-    # Safety limits
     max_relative_target: Optional[float] = None
     disable_torque_on_disconnect: bool = True
-
-    # Motion profile settings (Interbotix specific)
     profile_type: str = "time_based"
 
     def __post_init__(self):
