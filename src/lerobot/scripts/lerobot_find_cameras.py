@@ -297,6 +297,137 @@ def save_images_from_all_cameras(
             print(f"Image capture finished. Images saved to {output_dir}")
 
 
+from lerobot.robots.w250.constants import W250_REST_POSITION
+
+# Fallback joint limits for wx250s used if group_info is unavailable.
+_WIDOW_JOINT_LIMITS_FALLBACK = {
+    "waist":        (-3.14159, 3.14159),
+    "shoulder":     (-1.88,    1.99),
+    "elbow":        (-2.15,    1.60),
+    "forearm_roll": (-3.14159, 3.14159),
+    "wrist_angle":  (-1.745,   2.15),
+    "wrist_rotate": (-3.14159, 3.14159),
+}
+_ARM_JOINT_ORDER = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
+
+
+def _denormalize(normalized: float, lower: float, upper: float) -> float:
+    normalized = max(-1.0, min(1.0, normalized))
+    return lower + (normalized + 1.0) * (upper - lower) / 2.0
+
+
+def go_to_capture_pose_interbotix(robot_model: str, robot_name: str):
+    """
+    Connect to an Interbotix robot and move it to the appropriate capture pose:
+
+    * **WidowX** (``wx*``): HOME → REST position (arm raised, gripper open).
+    * **ViperX** (``vx*``) and others: HOME position (all joints at 0).
+
+    Args:
+        robot_model: Interbotix robot model string (e.g. "vx300s", "wx250s").
+        robot_name:  ROS2 robot name / namespace (usually matches robot_model).
+
+    Returns:
+        The ``InterbotixManipulatorXS`` bot handle so the caller can later send it
+        to sleep or shut it down.
+    """
+    try:
+        from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
+    except ImportError as e:
+        raise ImportError(
+            "interbotix_xs_modules not found. "
+            "Make sure the Interbotix ROS2 workspace is sourced before running this script."
+        ) from e
+
+    logger.info(f"Connecting to Interbotix robot: model={robot_model}, name={robot_name}")
+    bot = InterbotixManipulatorXS(
+        robot_model=robot_model,
+        group_name="arm",
+        gripper_name="gripper",
+        robot_name=robot_name,
+    )
+
+    is_widow = robot_model.startswith("wx")
+
+    if is_widow:
+        # Step 1: home pose as a safe intermediate trajectory.
+        logger.info("Step 1/2: Moving to HOME position (safe intermediate)…")
+        bot.arm.set_trajectory_time(moving_time=2.0, accel_time=0.5)
+        bot.arm.go_to_home_pose(blocking=True)
+        time.sleep(0.5)
+
+        # Step 2: resolve actual joint limits then move to REST.
+        try:
+            lower_limits = list(bot.arm.group_info.joint_lower_limits)
+            upper_limits = list(bot.arm.group_info.joint_upper_limits)
+        except Exception:
+            logger.warning("Could not read joint limits from robot; using fallback values.")
+            lower_limits = [_WIDOW_JOINT_LIMITS_FALLBACK[j][0] for j in _ARM_JOINT_ORDER]
+            upper_limits = [_WIDOW_JOINT_LIMITS_FALLBACK[j][1] for j in _ARM_JOINT_ORDER]
+
+        rest_positions = [
+            _denormalize(W250_REST_POSITION[f"{j}.pos"], lower_limits[i], upper_limits[i])
+            for i, j in enumerate(_ARM_JOINT_ORDER)
+        ]
+
+        logger.info("Step 2/2: Moving to REST position…")
+        if not bot.arm.set_joint_positions(rest_positions, blocking=True):
+            logger.warning("REST position rejected by Interbotix — positions may be outside joint limits.")
+
+        try:
+            bot.gripper.release(delay=2.0)
+        except Exception as e:
+            logger.warning(f"Could not open gripper: {e}")
+
+        logger.info("Robot is at REST position.")
+    else:
+        logger.info("Moving robot to HOME position (all joints at 0)…")
+        bot.arm.go_to_home_pose(blocking=True)
+        logger.info("Robot is at HOME position.")
+
+    time.sleep(1.0)  # let the arm fully settle before capturing
+    return bot
+
+
+def capture_realsense_at_home_position(
+    output_dir: Path,
+    robot_model: str = "vx300s",
+    robot_name: str = "vx300s",
+    record_time_s: float = 2.0,
+):
+    """
+    Move the robot to its home position, capture images from all connected
+    Intel RealSense cameras, then send the robot to its sleep pose.
+
+    Args:
+        output_dir:    Directory where captured images are saved.
+        robot_model:   Interbotix model string (e.g. "vx300s", "wx250s").
+        robot_name:    ROS2 robot namespace (usually same as robot_model).
+        record_time_s: Seconds to spend capturing frames from the cameras.
+    """
+    bot = None
+    try:
+        bot = go_to_capture_pose_interbotix(robot_model, robot_name)
+
+        logger.info("Capturing images from RealSense cameras at home position…")
+        save_images_from_all_cameras(
+            output_dir=output_dir,
+            record_time_s=record_time_s,
+            camera_type="realsense",
+        )
+    finally:
+        if bot is not None:
+            logger.info("Moving robot to sleep pose…")
+            try:
+                bot.arm.go_to_sleep_pose(blocking=True)
+            except Exception as e:
+                logger.warning(f"Could not move to sleep pose: {e}")
+            try:
+                bot.shutdown()
+            except Exception as e:
+                logger.warning(f"Could not cleanly shut down robot: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Unified camera utility script for listing cameras and capturing images."
@@ -322,8 +453,58 @@ def main():
         default=6.0,
         help="Time duration to attempt capturing frames. Default: 6 seconds.",
     )
+
+    # --- home-position capture (RealSense + Interbotix robot) ---
+    parser.add_argument(
+        "--home-position",
+        action="store_true",
+        default=False,
+        help=(
+            "Move the robot to its home position before capturing. "
+            "Only captures from Intel RealSense cameras. "
+            "Requires --robot-model and --robot-name and a running ROS2 Interbotix control node."
+        ),
+    )
+    parser.add_argument(
+        "--robot-model",
+        type=str,
+        default="vx300s",
+        help=(
+            "Interbotix robot model string used with --home-position "
+            "(e.g. 'vx300s', 'wx250s'). Default: vx300s"
+        ),
+    )
+    parser.add_argument(
+        "--robot-name",
+        type=str,
+        default=None,
+        help=(
+            "ROS2 robot namespace used with --home-position. "
+            "Defaults to the value of --robot-model if not set."
+        ),
+    )
+
     args = parser.parse_args()
-    save_images_from_all_cameras(**vars(args))
+
+    if args.home_position:
+        robot_name = args.robot_name or args.robot_model
+        if args.camera_type and args.camera_type != "realsense":
+            logger.warning(
+                "--home-position only supports RealSense cameras; ignoring camera_type=%s",
+                args.camera_type,
+            )
+        capture_realsense_at_home_position(
+            output_dir=args.output_dir,
+            robot_model=args.robot_model,
+            robot_name=robot_name,
+            record_time_s=args.record_time_s,
+        )
+    else:
+        save_images_from_all_cameras(
+            output_dir=args.output_dir,
+            record_time_s=args.record_time_s,
+            camera_type=args.camera_type,
+        )
 
 
 if __name__ == "__main__":
