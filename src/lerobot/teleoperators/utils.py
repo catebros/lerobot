@@ -111,6 +111,10 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> "Teleoperator":
         from .w250joystick.w250joystick import W250JoystickTeleop
 
         return W250JoystickTeleop(config)
+    elif config.type == "w250ik":
+        from .w250ik.w250ik import W250IKTeleop
+
+        return W250IKTeleop(config)
     else:
         try:
             return cast("Teleoperator", make_device_from_device_class(config))

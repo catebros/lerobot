@@ -377,6 +377,14 @@ def record_loop(
                 teleop.send_feedback(obs)
             act = teleop.get_action()
 
+            # Allow teleops that define get_teleop_events() to signal early exit
+            # (e.g. W250IKTeleop signals TERMINATE_EPISODE when its waypoints end).
+            if hasattr(teleop, "get_teleop_events"):
+                from lerobot.teleoperators.utils import TeleopEvents
+                tevents = teleop.get_teleop_events()
+                if tevents.get(TeleopEvents.TERMINATE_EPISODE, False):
+                    events["exit_early"] = True
+
             # Applies a pipeline to the raw teleop action, default is IdentityProcessor
             act_processed_teleop = teleop_action_processor((act, obs))
 
