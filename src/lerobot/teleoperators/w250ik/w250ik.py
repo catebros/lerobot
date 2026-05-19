@@ -133,15 +133,19 @@ class W250IKTeleop(Teleoperator):
             f"W250IKTeleop: {len(self._episodes)} episodes ready "
             f"({n_rec} record frames + {n_reset} reset frames)"
         )
-        self._ep_idx = 0; self._in_reset = False
+        self._ep_idx = self.config.start_episode_idx
+        self._in_reset = False
         self._frame  = 0; self._ep_done  = False
         self._is_connected = True
 
+        if self._ep_idx > 0:
+            logger.info(f"W250IKTeleop: resuming from episode {self._ep_idx + 1}/{len(self._episodes)}")
+
         # Print first-episode placement instructions — no pointing phase runs before ep 1.
-        first_ep = self._raw_episodes[0]
-        label = first_ep.get("label", "ep1")
+        first_ep = self._raw_episodes[self._ep_idx]
+        label = first_ep.get("label", f"ep{self._ep_idx + 1}")
         print("\n" + "="*60)
-        print("  BEFORE STARTING: place the bowl for EPISODE 1")
+        print(f"  BEFORE STARTING: place the bowl for EPISODE {self._ep_idx + 1}")
         print(f"  Label : {label}")
         print(f"  x={first_ep['x']:.4f}  y={first_ep['y']:.4f}  z={first_ep['z']:.4f}")
         print(f"  roll  : {math.degrees(first_ep['roll']):.1f}°")

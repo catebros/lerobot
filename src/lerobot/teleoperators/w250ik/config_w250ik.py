@@ -53,6 +53,11 @@ class W250IKConfig(TeleoperatorConfig):
     duration_transport:     float = 2.0
     duration_centre_hold:   float = 1.0   # hold at centre before episode ends
 
+    # ── Resume: skip already-recorded episodes ────────────────────────────────
+    # Set to the number of episodes already saved so the teleop starts from
+    # the correct position in the JSON file when resuming with --resume=true.
+    start_episode_idx: int = 0
+
     # ── Reset-phase durations (not recorded) ──────────────────────────────────
     duration_release:  float = 8.0
     # Robot hovers over the NEXT bowl position after releasing so you can place
