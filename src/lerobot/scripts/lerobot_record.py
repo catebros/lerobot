@@ -134,6 +134,7 @@ from lerobot.teleoperators import (  # noqa: F401
 )
 from lerobot.teleoperators import w250keyboard  # noqa: F401 — registers W250KeyboardConfig
 from lerobot.teleoperators import v300keyboard  # noqa: F401 — registers V300KeyboardConfig
+from lerobot.teleoperators import w250ik        # noqa: F401 — registers W250IKConfig
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.constants import ACTION, OBS_STR
 from lerobot.utils.control_utils import (
@@ -578,6 +579,11 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                         single_task=cfg.dataset.single_task,
                         display_data=cfg.display_data,
                     )
+
+                    # Allow teleops that self-pace their reset (e.g. W250IKTeleop) to
+                    # advance their internal episode counter now that the reset loop ended.
+                    if hasattr(teleop, "on_episode_end"):
+                        teleop.on_episode_end()
 
                 if events["rerecord_episode"]:
                     log_say("Re-record episode", cfg.play_sounds)

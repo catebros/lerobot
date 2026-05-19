@@ -90,10 +90,12 @@ class W250IKTeleop(Teleoperator):
         self.config = config
         self._is_connected: bool = False
         self._episodes: list[_Episode] = []
-        self._ep_idx:   int  = 0
-        self._in_reset: bool = False
-        self._frame:    int  = 0
-        self._ep_done:  bool = False
+        self._raw_episodes: list[dict] = []
+        self._ep_idx:    int  = 0
+        self._in_reset:  bool = False
+        self._frame:     int  = 0
+        self._ep_done:   bool = False
+        self._rst_held:  bool = False  # True while holding last reset frame
 
     # ── Teleoperator interface ────────────────────────────────────────────────
 
@@ -135,6 +137,17 @@ class W250IKTeleop(Teleoperator):
         self._frame  = 0; self._ep_done  = False
         self._is_connected = True
 
+        # Print first-episode placement instructions — no pointing phase runs before ep 1.
+        first_ep = self._raw_episodes[0]
+        label = first_ep.get("label", "ep1")
+        print("\n" + "="*60)
+        print("  BEFORE STARTING: place the bowl for EPISODE 1")
+        print(f"  Label : {label}")
+        print(f"  x={first_ep['x']:.4f}  y={first_ep['y']:.4f}  z={first_ep['z']:.4f}")
+        print(f"  roll  : {math.degrees(first_ep['roll']):.1f}°")
+        print("  Press Ctrl+C to abort, or just start recording once ready.")
+        print("="*60 + "\n")
+
     def disconnect(self) -> None:
         self._is_connected = False
         logger.info("W250IKTeleop disconnected")
@@ -152,7 +165,10 @@ class W250IKTeleop(Teleoperator):
                 self._frame = len(frames)
                 self._ep_done = True
             else:
-                self._advance_episode()
+                # Hold at last reset frame; _advance_episode() is called by
+                # lerobot_record after the reset loop via on_episode_end().
+                self._frame = len(frames) - 1
+                self._rst_held = True
         return dict(pos)
 
     def get_teleop_events(self) -> dict[str, Any]:
@@ -171,6 +187,12 @@ class W250IKTeleop(Teleoperator):
 
     def send_feedback(self, feedback: dict) -> None:
         pass
+
+    def on_episode_end(self) -> None:
+        """Called by lerobot_record after the reset loop ends to advance to the next episode."""
+        if self._in_reset:
+            self._rst_held = False
+            self._advance_episode()
 
     def _advance_episode(self) -> None:
         next_idx = self._ep_idx + 1
@@ -279,22 +301,22 @@ class W250IKTeleop(Teleoperator):
         upper_limits,
         x_bowl: float, y_bowl: float, z_bowl: float, roll: float,
         center_x: float, center_y: float, center_z: float,
+        next_bowl: tuple[float, float, float, float] | None = None,
     ) -> tuple[_Waypoints, _Waypoints]:
         cfg = self.config
         OPEN, CLOSED = 1.0, 0.0
 
-        def wp(label, x, y, z, grip, n_frames):
+        def wp(label, x, y, z, r, grip, n_frames):
             return self._ik_to_waypoint(
                 robot_des, lower_limits, upper_limits,
-                label, x, y, z, roll, grip, n_frames,
+                label, x, y, z, r, grip, n_frames,
             )
 
+        def bowl_wp(label, x, y, z, grip, n_frames):
+            return wp(label, x, y, z, roll, grip, n_frames)
+
         def centre_wp(grip, n_frames):
-            return self._ik_to_waypoint(
-                robot_des, lower_limits, upper_limits,
-                "centre", center_x, center_y, center_z,
-                0.0, grip, n_frames,
-            )
+            return wp("centre", center_x, center_y, center_z, 0.0, grip, n_frames)
 
         rest_dict = {**W250_REST_POSITION, "gripper.pos": OPEN}
         z_hover = z_bowl + cfg.approach_height
@@ -302,18 +324,29 @@ class W250IKTeleop(Teleoperator):
         f = self._frames
 
         record_wps = [
-            (rest_dict,                                                   f(cfg.duration_rest_start)),
-            wp("hover",   x_bowl, y_bowl, z_hover,    OPEN,   f(cfg.duration_approach)),
-            wp("descend", x_bowl, y_bowl, z_bowl,     OPEN,   f(cfg.duration_descend)),
-            wp("grip",    x_bowl, y_bowl, z_bowl,     CLOSED, f(cfg.duration_close_gripper)),
-            wp("lift",    x_bowl, y_bowl, z_lift,     CLOSED, f(cfg.duration_lift)),
+            (rest_dict,                                                         f(cfg.duration_rest_start)),
+            bowl_wp("hover",   x_bowl, y_bowl, z_hover,    OPEN,   f(cfg.duration_approach)),
+            bowl_wp("descend", x_bowl, y_bowl, z_bowl,     OPEN,   f(cfg.duration_descend)),
+            bowl_wp("grip",    x_bowl, y_bowl, z_bowl,     CLOSED, f(cfg.duration_close_gripper)),
+            bowl_wp("lift",    x_bowl, y_bowl, z_lift,     CLOSED, f(cfg.duration_lift)),
             centre_wp(CLOSED, f(cfg.duration_transport)),
+            centre_wp(CLOSED, f(cfg.duration_centre_hold)),
         ]
 
-        reset_wps = [
+        reset_wps: _Waypoints = [
             centre_wp(OPEN, f(cfg.duration_release)),
-            (rest_dict, f(cfg.duration_rest_end)),
         ]
+
+        # If there is a next bowl position and pointing is enabled, hover over it
+        # so the user can place the bowl directly under the gripper.
+        if next_bowl is not None and cfg.duration_pointing > 0:
+            nx, ny, nz, nroll = next_bowl
+            nz_hover = nz + cfg.approach_height
+            reset_wps.append(
+                wp("point_next", nx, ny, nz_hover, nroll, OPEN, f(cfg.duration_pointing))
+            )
+
+        reset_wps.append((rest_dict, f(cfg.duration_rest_end)))
 
         return record_wps, reset_wps
 
@@ -329,23 +362,44 @@ class W250IKTeleop(Teleoperator):
         with open(positions_path) as f:
             data = json.load(f)
 
-        center  = data["center"]
-        cx, cy, cz = float(center["x"]), float(center["y"]), float(center["z"])
-        logger.info(f"Center: ({cx:.3f}, {cy:.3f}, {cz:.3f})")
+        if "center" in data:
+            center = data["center"]
+            cx, cy, cz = float(center["x"]), float(center["y"]), float(center["z"])
+            logger.info(f"Center: ({cx:.3f}, {cy:.3f}, {cz:.3f})  [from JSON]")
+        else:
+            cx, cy, cz = cfg.center_x, cfg.center_y, cfg.center_z
+            logger.info(f"Center: ({cx:.3f}, {cy:.3f}, {cz:.3f})  [from config defaults]")
 
         robot_des    = self._get_robot_description()
         lower_limits = [W250_JOINT_LIMITS[n][0] for n in W250_JOINT_NAMES]
         upper_limits  = [W250_JOINT_LIMITS[n][1] for n in W250_JOINT_NAMES]
 
+        raw = data["episodes"]
+        self._raw_episodes = raw
         episodes = []
-        for i, ep in enumerate(data["episodes"]):
+        for i, ep in enumerate(raw):
             label = ep.get("label", f"ep{i+1}")
             x, y, z = float(ep["x"]), float(ep["y"]), float(ep["z"])
             roll    = float(ep.get("roll", 0.0))
-            logger.info(f"Episode {i+1:2d} '{label}': ({x:.3f},{y:.3f},{z:.3f}) roll={math.degrees(roll):.1f}°")
+
+            # Next bowl for the pointing step (None on the last episode)
+            if i + 1 < len(raw):
+                nep  = raw[i + 1]
+                next_bowl = (float(nep["x"]), float(nep["y"]), float(nep["z"]), float(nep.get("roll", 0.0)))
+                next_label = nep.get("label", f"ep{i+2}")
+                logger.info(
+                    f"Episode {i+1:2d} '{label}': ({x:.3f},{y:.3f},{z:.3f}) roll={math.degrees(roll):.1f}°"
+                    f"  →  next: '{next_label}'"
+                )
+            else:
+                next_bowl  = None
+                next_label = None
+                logger.info(f"Episode {i+1:2d} '{label}': ({x:.3f},{y:.3f},{z:.3f}) roll={math.degrees(roll):.1f}°  [last]")
+
             rec_wps, rst_wps = self._build_pick_place_episode(
                 robot_des, lower_limits, upper_limits,
                 x, y, z, roll, cx, cy, cz,
+                next_bowl=next_bowl,
             )
             episodes.append((_expand_to_frames(rec_wps), _expand_to_frames(rst_wps)))
 
