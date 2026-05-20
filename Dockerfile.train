@@ -17,7 +17,7 @@ RUN git clone -b main https://github.com/catebros/lerobot.git /lerobot
 
 WORKDIR /lerobot
 
-# Install lerobot with ACT extras
-RUN pip install -e ".[act]"
+# Install lerobot
+RUN pip install -e .
 
 WORKDIR /
