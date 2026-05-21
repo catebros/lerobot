@@ -7,17 +7,17 @@ RUN apt-get update && apt-get install -y \
     git ffmpeg libgl1-mesa-glx libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --upgrade pip
-
-# PyTorch for CUDA 12.4 (compatible with driver CUDA 12.8)
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+RUN python3 -m pip install pip==25.2
 
 # Clone lerobot from the correct branch
 RUN git clone -b main https://github.com/catebros/lerobot.git /lerobot
 
 WORKDIR /lerobot
 
-# Install lerobot with ACT extras
-RUN pip install ".[act]"
+# Install exact versions from working local env
+COPY requirements.txt .
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+RUN pip install -r requirements.txt --ignore-requires-python
+RUN pip install . --no-deps
 
 WORKDIR /
