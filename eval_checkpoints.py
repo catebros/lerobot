@@ -72,4 +72,5 @@ for ckpt in checkpoints:
         avg_loss = total_loss / batches
         print(f"{ckpt.name:>10} | {avg_loss:>12.6f}")
     except Exception as e:
+        import traceback; traceback.print_exc()
         print(f"{ckpt.name:>10} | ERROR: {e}")
