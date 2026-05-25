@@ -49,7 +49,7 @@ for ckpt in checkpoints:
     try:
         policy = ACTPolicy.from_pretrained(str(model_path))
         policy = policy.to(device)
-        policy.eval()
+        policy.train()  # VAE encoder only runs in training mode
 
         preprocessor, _ = make_pre_post_processors(
             policy_cfg=policy.config,
