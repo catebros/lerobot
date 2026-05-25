@@ -7,17 +7,25 @@ RUN apt-get update && apt-get install -y \
     git ffmpeg libgl1-mesa-glx libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install pip==25.2
+RUN python3 -m pip install --upgrade pip
+
+# Install PyTorch + torchvision + torchaudio + torchcodec from the cu124 wheel index.
+# This uses system CUDA and does NOT bundle nvidia-* packages, avoiding conflicts.
+RUN pip install \
+    torch==2.7.1 torchvision==0.22.1 torchaudio \
+    torchcodec==0.5 \
+    --index-url https://download.pytorch.org/whl/cu124
 
 # Clone lerobot from the correct branch
 RUN git clone -b main https://github.com/catebros/lerobot.git /lerobot
 
 WORKDIR /lerobot
 
-# Install exact versions from working local env
-COPY requirements.txt .
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-RUN pip install -r requirements.txt --ignore-requires-python
+# Install remaining requirements (nvidia-*, triton, torch excluded — handled above)
+COPY requirements-train.txt .
+RUN pip install -r requirements-train.txt --ignore-requires-python
+
+# Install lerobot package itself without pulling in deps again
 RUN pip install . --no-deps
 
 WORKDIR /
