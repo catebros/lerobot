@@ -9,24 +9,25 @@ RUN apt-get update && apt-get install -y \
 
 RUN python3 -m pip install --upgrade pip
 
-# PyTorch 2.7.x is only available for cu126/cu128 — use cu128 to match base image.
-# torchcodec must also come from the pytorch index (not PyPI).
+# Install PyTorch from cu128 index first so pip sees it as already satisfied
+# and won't pull the PyPI version (which bundles nvidia-* CUDA libs differently).
 RUN pip install \
     torch==2.7.1 torchvision==0.22.1 torchaudio \
     --index-url https://download.pytorch.org/whl/cu128
-RUN pip install torchcodec==0.5 --index-url https://download.pytorch.org/whl/cu128 || \
-    pip install torchcodec==0.5
 
-# Clone lerobot from the correct branch
+# torchcodec must also come from the pytorch index
+RUN pip install torchcodec==0.5 \
+    --index-url https://download.pytorch.org/whl/cu128 \
+    || pip install torchcodec==0.5
+
+# Clone lerobot
 RUN git clone -b main https://github.com/catebros/lerobot.git /lerobot
 
 WORKDIR /lerobot
 
-# Install remaining requirements (nvidia-*, triton, torch excluded — handled above)
-COPY requirements-train.txt .
-RUN pip install -r requirements-train.txt --ignore-requires-python
-
-# Install lerobot package itself without pulling in deps again
-RUN pip install . --no-deps
+# Install lerobot with the pi extra (transformers + scipy for pi0/pi0_fast).
+# Using [pi] avoids simulation extras that pull in egl_probe / hf-egl-probe (need cmake).
+# torch is already installed above so pip will reuse it.
+RUN pip install ".[pi]" --extra-index-url https://download.pytorch.org/whl/cu128
 
 WORKDIR /
