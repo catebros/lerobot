@@ -1,4 +1,6 @@
 """Compute training loss for each checkpoint to identify the best one."""
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
 import torch
 from pathlib import Path
 from torch.utils.data import DataLoader
