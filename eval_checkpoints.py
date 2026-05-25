@@ -1,5 +1,4 @@
 """Compute training loss for each checkpoint to identify the best one."""
-import os
 import torch
 from pathlib import Path
 from torch.utils.data import DataLoader
@@ -9,11 +8,21 @@ from lerobot.policies.act.modeling_act import ACTPolicy
 CHECKPOINTS_DIR = Path("outputs/train/act_w250_bowl_v1/checkpoints")
 DATASET_REPO_ID = "catebros/w250-bowl-pickplace"
 BATCH_SIZE = 32
-NUM_BATCHES = 20  # samples ~640 frames per checkpoint, fast enough
+NUM_BATCHES = 20
+CHUNK_SIZE = 30
+FPS = 15
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset = LeRobotDataset(DATASET_REPO_ID, video_backend="pyav")
+delta_timestamps = {
+    "observation.images.cam_wrist": [0],
+    "observation.images.cam_top": [0],
+    "observation.images.cam_wrist_depth": [0],
+    "observation.state": [0],
+    "action": [i / FPS for i in range(CHUNK_SIZE)],
+}
+
+dataset = LeRobotDataset(DATASET_REPO_ID, delta_timestamps=delta_timestamps, video_backend="pyav")
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 checkpoints = sorted([
